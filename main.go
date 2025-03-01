@@ -18,7 +18,14 @@ func main() {
 			fmt.Println(err)
 		}
 		tokens := utils.Tokenize(sentence)
-
+		isValidCmd := utils.ValidateCmd(tokens[0])
+		if !isValidCmd {
+			fmt.Println("Command not implemented")
+		}
+		isValidArgCount := utils.IsValidArgsCount(tokens[0], len(tokens)-1)
+		if !isValidArgCount {
+			utils.PrintInvalidArgsError(tokens[0])
+		}
 		fmt.Println(tokens[0])
 	}
 }
