@@ -23,8 +23,9 @@ func init() {
 		output = os.Stdout
 	}
 
-	Info = log.New(output, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
-	Error = log.New(output, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
+	Info = log.New(output, "INFO: ", log.Ldate|log.Ltime)
+	Error = log.New(output, "ERROR: ", log.Ldate|log.Ltime)
+
 }
 
 func Infof(format string, v ...interface{}) {
