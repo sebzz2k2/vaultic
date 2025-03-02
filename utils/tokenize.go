@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -20,8 +19,4 @@ func ValidateCmd(token string) bool {
 
 func IsValidArgsCount(token string, argsCount int) bool {
 	return cmdArgs[strings.ToLower(token)] == argsCount
-}
-
-func PrintInvalidArgsError(token string) {
-	fmt.Println("Expected syantax is: ", cmdArgsErrors[strings.ToLower(token)])
 }

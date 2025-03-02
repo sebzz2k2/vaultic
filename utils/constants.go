@@ -12,7 +12,7 @@ var cmdArgs = map[string]int{
 	CommandGet: 1,
 }
 
-var cmdArgsErrors = map[string]string{
+var CmdArgsErrors = map[string]string{
 	CommandGet: "GET [val]",
 	CommandSet: "SET [val] [val]",
 }
