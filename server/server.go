@@ -18,13 +18,11 @@ func Start(address string) {
 	defer connection.Close()
 	for {
 		client, err := connection.Accept()
-		clientID := genClientID()
 		writeToClient(client, "Welcome to vaultic\n")
-		writeToClient(client, "Your client ID is: "+clientID+"\n")
 		writeToClient(client, "> ")
 		if err != nil {
 			panic(err)
 		}
-		go handleClient(client, clientID)
+		go handleClient(client)
 	}
 }

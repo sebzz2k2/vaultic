@@ -5,7 +5,6 @@ import (
 	"net"
 	"strings"
 
-	"github.com/sebzz2k2/vaultic/logger"
 	"github.com/sebzz2k2/vaultic/utils"
 )
 
@@ -21,12 +20,10 @@ func readBuffer(reader io.Reader) ([]byte, bool) {
 	return b[:bn], false
 }
 
-func handleClient(client io.Reader, clientID string) {
-	logger.Infof("Client connected with ID: %s", clientID)
+func handleClient(client io.Reader) {
 	for {
 		buff, beof := readBuffer(client)
 		if beof {
-			logger.Infof("Client disconnected with ID: %s", clientID)
 			break
 		}
 		tokens := utils.Tokenize(buff)
