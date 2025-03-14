@@ -2,6 +2,8 @@ package server
 
 import (
 	"net"
+
+	"github.com/sebzz2k2/vaultic/utils"
 )
 
 func Start(address string) {
@@ -12,8 +14,8 @@ func Start(address string) {
 	defer connection.Close()
 	for {
 		client, err := connection.Accept()
-		writeToClient(client, "Welcome to vaultic\n")
-		writeToClient(client, "> ")
+		utils.WriteToClient(client, "Welcome to vaultic\n")
+		utils.WriteToClient(client, "> ")
 		if err != nil {
 			panic(err)
 		}

@@ -1,8 +1,8 @@
 package server
 
 import (
+	"fmt"
 	"io"
-	"net"
 	"strings"
 
 	"github.com/sebzz2k2/vaultic/cmd"
@@ -30,28 +30,23 @@ func handleClient(client io.Reader) {
 		tokens := utils.Tokenize(buff)
 		cmd := cmd.CommandFactory(tokens[0])
 		if cmd == nil {
-			writeToClient(client, "Invalid command\n")
+			utils.WriteToClient(client, "Invalid command\n")
 		}
 		isValidArgCount := cmd.Validate(len(tokens) - 1)
 		if !isValidArgCount {
-			sendInvalidArgumentResponse(client, tokens[0])
+			fmt.Println(len(tokens) - 1)
+			utils.WriteToClient(client, "Expected syntax is: "+utils.CmdArgsErrors[strings.ToLower(tokens[0])]+"\n")
+			continue
 		}
-		showPrompt(client)
-	}
-}
+		fmt.Println("Validated")
 
-func showPrompt(client io.Reader) {
-	if conn, ok := client.(net.Conn); ok {
-		writeToClient(conn, "> ")
-	}
-}
+		val, err := cmd.Process(tokens[1:])
+		if err != nil {
+			utils.WriteToClient(client, err.Error())
+		} else {
 
-func writeToClient(client io.Reader, message string) {
-	if conn, ok := client.(net.Conn); ok {
-		conn.Write([]byte(message))
+			utils.WriteToClient(client, val+"\n")
+		}
+		utils.WriteToClient(client, "> ")
 	}
-}
-
-func sendInvalidArgumentResponse(client io.Reader, token string) {
-	writeToClient(client, "Expected syntax is: "+utils.CmdArgsErrors[strings.ToLower(token)]+"\n")
 }

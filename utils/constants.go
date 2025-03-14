@@ -3,9 +3,10 @@ package utils
 const (
 	CommandGet = "get"
 	CommandSet = "set"
+	FILENAME   = "vaultic"
+	DELIMITER  = ":"
+	NEWLINE    = "\n"
 )
-
-var validCommands = []string{CommandGet, CommandSet}
 
 var CmdArgs = map[string]int{
 	CommandSet: 2,
