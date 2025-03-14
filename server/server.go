@@ -2,13 +2,7 @@ package server
 
 import (
 	"net"
-
-	"github.com/google/uuid"
 )
-
-func genClientID() string {
-	return uuid.New().String()
-}
 
 func Start(address string) {
 	connection, err := net.Listen("tcp", address)

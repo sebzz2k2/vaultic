@@ -7,7 +7,7 @@ const (
 
 var validCommands = []string{CommandGet, CommandSet}
 
-var cmdArgs = map[string]int{
+var CmdArgs = map[string]int{
 	CommandSet: 2,
 	CommandGet: 1,
 }

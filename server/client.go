@@ -5,6 +5,7 @@ import (
 	"net"
 	"strings"
 
+	"github.com/sebzz2k2/vaultic/cmd"
 	"github.com/sebzz2k2/vaultic/utils"
 )
 
@@ -27,11 +28,11 @@ func handleClient(client io.Reader) {
 			break
 		}
 		tokens := utils.Tokenize(buff)
-		isValidCmd := utils.ValidateCmd(tokens[0])
-		if !isValidCmd {
+		cmd := cmd.CommandFactory(tokens[0])
+		if cmd == nil {
 			writeToClient(client, "Invalid command\n")
 		}
-		isValidArgCount := utils.IsValidArgsCount(tokens[0], len(tokens)-1)
+		isValidArgCount := cmd.Validate(len(tokens) - 1)
 		if !isValidArgCount {
 			sendInvalidArgumentResponse(client, tokens[0])
 		}
