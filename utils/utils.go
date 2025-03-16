@@ -3,9 +3,21 @@ package utils
 import (
 	"bufio"
 	"fmt"
+	"io"
+	"net"
 	"os"
 	"regexp"
+	"strings"
 )
+
+func WriteToClient(client io.Reader, message string) {
+	if conn, ok := client.(net.Conn); ok {
+		conn.Write([]byte(message))
+	}
+}
+func Tokenize(inp []byte) []string {
+	return strings.Fields(string(inp))
+}
 
 func WriteToFile(filename string, content string) error {
 	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
