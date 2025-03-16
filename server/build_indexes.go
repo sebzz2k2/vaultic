@@ -32,13 +32,13 @@ func (ib *IndexBuilder) BuildIndexes() error {
 		}
 		i++
 		if ignore {
-			if b == '\n' {
+			if b == utils.NEWLINE[0] {
 				ignore = false
 			}
 			continue
 		}
 		if b == ib.delimiter {
-			utils.SetIndexKey(string(key), i+1)
+			utils.SetIndexKey(string(key), i)
 			ignore, key = true, nil
 			continue
 		}

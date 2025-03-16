@@ -1,10 +1,8 @@
 package cmd
 
 import (
-	"bufio"
-	"fmt"
+	"io"
 	"os"
-	"regexp"
 
 	"github.com/sebzz2k2/vaultic/utils"
 )
@@ -25,20 +23,27 @@ func (g GET) Process(kn []string) (string, error) {
 		return "", err
 	}
 	defer file.Close()
-	pattern := fmt.Sprintf(`^%s(.*)`, kn[0]+utils.DELIMITER)
-	re := regexp.MustCompile(pattern)
-	var lastMatch string
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if matches := re.FindStringSubmatch(line); matches != nil {
-			lastMatch = matches[1] // Extract content after "key:"
+	offset, bool := utils.GetIndexVal(kn[0])
+	if bool {
+		_, err = file.Seek(int64(offset), 0)
+		if err != nil {
+			return "", err
 		}
+		var result []byte
+		buf := make([]byte, 1)
+		for {
+			_, err := file.Read(buf)
+			if err != nil {
+				break
+			}
+			if buf[0] == utils.NEWLINE[0] {
+				break
+			}
+			result = append(result, buf[0])
+		}
+		return string(result), nil
 	}
-	if err := scanner.Err(); err != nil {
-		return "", err
-	}
-	return lastMatch, nil
+	return "", nil
 }
 
 func (g GET) Validate(argsCount int) bool {
@@ -52,8 +57,22 @@ func (s SET) Process(kv []string) (string, error) {
 	val := kv[1]
 
 	setVal := key + utils.DELIMITER + val + utils.NEWLINE
-
-	return "", utils.WriteToFile(utils.FILENAME, setVal)
+	file, err := os.OpenFile(utils.FILENAME, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return "", err
+	}
+	size, err := file.Seek(0, io.SeekEnd)
+	offset := int(size) + len(key) + 1
+	utils.SetIndexKey(key, offset)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+	_, err = file.WriteString(setVal)
+	if err != nil {
+		return "", err
+	}
+	return utils.SUCCESS, nil
 }
 func (s SET) Validate(argsCount int) bool {
 	return utils.CmdArgs[utils.CommandSet] == argsCount

@@ -1,6 +1,9 @@
 package utils
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 var Data sync.Map
 
@@ -14,4 +17,11 @@ func GetIndexVal(key string) (int, bool) {
 		return val.(int), true
 	}
 	return 0, false
+}
+
+func PrintIndexMap() {
+	Data.Range(func(key, value interface{}) bool {
+		fmt.Printf("%s: %d\n", key.(string), value.(int))
+		return true
+	})
 }

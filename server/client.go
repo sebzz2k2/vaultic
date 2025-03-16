@@ -38,7 +38,6 @@ func handleClient(client io.Reader) {
 			utils.WriteToClient(client, "Expected syntax is: "+utils.CmdArgsErrors[strings.ToLower(tokens[0])]+"\n")
 			continue
 		}
-		fmt.Println("Validated")
 
 		val, err := cmd.Process(tokens[1:])
 		if err != nil {
