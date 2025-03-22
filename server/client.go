@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/sebzz2k2/vaultic/cmd"
+	"github.com/sebzz2k2/vaultic/lexer"
 	"github.com/sebzz2k2/vaultic/utils"
 )
 
@@ -20,13 +21,16 @@ func readBuffer(reader io.Reader) ([]byte, bool) {
 	}
 	return b[:bn], false
 }
-
+func parse(tokens []lexer.Token) {
+}
 func handleClient(client io.Reader) {
 	for {
 		buff, beof := readBuffer(client)
 		if beof {
 			break
 		}
+		tkns := lexer.Tokenize(string(buff))
+		parse(tkns) // This is a dummy function to show how to use the lexer
 		tokens := utils.Tokenize(buff)
 		cmd := cmd.CommandFactory(tokens[0])
 		if cmd == nil {
