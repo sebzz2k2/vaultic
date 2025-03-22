@@ -1,8 +1,8 @@
 package server
 
 import (
-	"fmt"
 	"io"
+	"net"
 	"strings"
 
 	"github.com/sebzz2k2/vaultic/cmd"
@@ -23,7 +23,7 @@ func readBuffer(reader io.Reader) ([]byte, bool) {
 }
 func parse(tokens []lexer.Token) {
 }
-func handleClient(client io.Reader) {
+func handleClient(client net.Conn) {
 	for {
 		buff, beof := readBuffer(client)
 		if beof {
@@ -35,11 +35,13 @@ func handleClient(client io.Reader) {
 		cmd := cmd.CommandFactory(tokens[0])
 		if cmd == nil {
 			utils.WriteToClient(client, "Invalid command\n")
+			utils.WriteToClient(client, "> ")
+			continue
 		}
 		isValidArgCount := cmd.Validate(len(tokens) - 1)
 		if !isValidArgCount {
-			fmt.Println(len(tokens) - 1)
 			utils.WriteToClient(client, "Expected syntax is: "+utils.CmdArgsErrors[strings.ToLower(tokens[0])]+"\n")
+			utils.WriteToClient(client, "> ")
 			continue
 		}
 
