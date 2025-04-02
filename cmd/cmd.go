@@ -1,9 +1,10 @@
 package cmd
 
 import (
-	"io"
 	"os"
+	"time"
 
+	"github.com/sebzz2k2/vaultic/kv_store/storage"
 	"github.com/sebzz2k2/vaultic/utils"
 )
 
@@ -55,20 +56,17 @@ type SET struct{}
 func (s SET) Process(kv []string) (string, error) {
 	key := kv[0]
 	val := kv[1]
+	now := time.Now()
+	epochSeconds := now.Unix()
 
-	setVal := key + utils.DELIMITER + val + utils.NEWLINE
+	setVal := storage.EncodeData(1, false, uint64(epochSeconds), key, val)
+
 	file, err := os.OpenFile(utils.FILENAME, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return "", err
 	}
-	size, err := file.Seek(0, io.SeekEnd)
-	offset := int(size) + len(key) + 1
-	utils.SetIndexKey(key, offset)
-	if err != nil {
-		return "", err
-	}
 	defer file.Close()
-	_, err = file.WriteString(setVal)
+	_, err = file.Write(setVal)
 	if err != nil {
 		return "", err
 	}
