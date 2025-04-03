@@ -55,6 +55,8 @@ func DecodeData(encoded []byte) (map[string]interface{}, error) {
 		"version":     version,
 		"flags":       decodedFlags,
 		"key":         key,
+		"keyLen":      keyLen,
+		"valueLen":    valueLen,
 		"val":         value,
 		"ts":          ts,
 	}, nil

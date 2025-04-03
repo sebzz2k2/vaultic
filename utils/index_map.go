@@ -7,8 +7,13 @@ import (
 
 var Data sync.Map
 
-func SetIndexKey(key string, value int) {
-	Data.Store(key, value)
+type IndexValue struct {
+	Start uint32
+	End   uint32
+}
+
+func SetIndexKey(key string, start, end uint32) {
+	Data.Store(key, IndexValue{Start: start, End: end})
 }
 
 func GetIndexVal(key string) (int, bool) {
@@ -21,7 +26,7 @@ func GetIndexVal(key string) (int, bool) {
 
 func PrintIndexMap() {
 	Data.Range(func(key, value interface{}) bool {
-		fmt.Printf("%s: %d\n", key.(string), value.(int))
+		fmt.Printf("%s: %d %d\n", key.(string), value.(IndexValue).Start, value.(IndexValue).End)
 		return true
 	})
 }
