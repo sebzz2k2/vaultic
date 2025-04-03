@@ -16,12 +16,12 @@ func SetIndexKey(key string, start, end uint32) {
 	Data.Store(key, IndexValue{Start: start, End: end})
 }
 
-func GetIndexVal(key string) (int, bool) {
+func GetIndexVal(key string) (uint32, uint32, bool) {
 	val, exists := Data.Load(key)
 	if exists {
-		return val.(int), true
+		return val.(IndexValue).Start, val.(IndexValue).End, true
 	}
-	return 0, false
+	return 0, 0, false
 }
 
 func PrintIndexMap() {

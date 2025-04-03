@@ -25,27 +25,20 @@ func (g GET) Process(kn []string) (string, error) {
 		return "", err
 	}
 	defer file.Close()
-	offset, bool := utils.GetIndexVal(kn[0])
+	start, end, bool := utils.GetIndexVal(kn[0])
 	if bool {
-		_, err = file.Seek(int64(offset), 0)
+		_, err := file.Seek(int64(start), io.SeekStart)
 		if err != nil {
 			return "", err
 		}
-		var result []byte
-		buf := make([]byte, 1)
-		for {
-			_, err := file.Read(buf)
-			if err != nil {
-				break
-			}
-			if buf[0] == utils.NEWLINE[0] {
-				break
-			}
-			result = append(result, buf[0])
+		b := make([]byte, end-start)
+		n, err := file.Read(b)
+		if err != nil {
+			return "", err
 		}
-		return string(result), nil
+		return string(b[:n]), nil
 	}
-	return "", nil
+	return "(nil)", nil
 }
 
 func (g GET) Validate(argsCount int) bool {
@@ -73,7 +66,6 @@ func (s SET) Process(kv []string) (string, error) {
 	offset := uint32(size) + uint32(totalLen)
 	start := offset - uint32(len(val))
 	utils.SetIndexKey(key, start, offset)
-	utils.PrintIndexMap()
 	defer file.Close()
 	_, err = file.Write(setVal)
 	if err != nil {
