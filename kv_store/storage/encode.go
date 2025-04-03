@@ -28,7 +28,7 @@ func EncodeFlags(flags ...bool) byte {
 <key length> bytes key
 <value length> bytes value
 */
-func EncodeData(version int, deleted bool, ts uint64, key, value string) []byte {
+func EncodeData(version int, deleted bool, ts uint64, key, value string) ([]byte, int) {
 	keyLen := uint16(len(key))     // 2 bytes for key length
 	valueLen := uint32(len(value)) // 4 bytes for value length
 
@@ -65,5 +65,5 @@ func EncodeData(version int, deleted bool, ts uint64, key, value string) []byte 
 	encoded = append(encoded, key...)
 	encoded = append(encoded, value...)
 
-	return encoded
+	return encoded, totalLength
 }

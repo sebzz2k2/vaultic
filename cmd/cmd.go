@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"io"
 	"os"
 	"time"
 
@@ -59,12 +60,20 @@ func (s SET) Process(kv []string) (string, error) {
 	now := time.Now()
 	epochSeconds := now.Unix()
 
-	setVal := storage.EncodeData(1, false, uint64(epochSeconds), key, val)
+	setVal, totalLen := storage.EncodeData(1, false, uint64(epochSeconds), key, val)
 
 	file, err := os.OpenFile(utils.FILENAME, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return "", err
 	}
+	size, err := file.Seek(0, io.SeekEnd)
+	if err != nil {
+		return "", err
+	}
+	offset := uint32(size) + uint32(totalLen)
+	start := offset - uint32(len(val))
+	utils.SetIndexKey(key, start, offset)
+	utils.PrintIndexMap()
 	defer file.Close()
 	_, err = file.Write(setVal)
 	if err != nil {

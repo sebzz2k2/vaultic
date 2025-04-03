@@ -58,6 +58,5 @@ func (ib *IndexBuilder) BuildIndexes() error {
 		key := val.(map[string]interface{})["key"].(string)
 		utils.SetIndexKey(key, start, offset)
 	}
-	utils.PrintIndexMap()
 	return nil
 }
