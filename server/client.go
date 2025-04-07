@@ -3,7 +3,6 @@ package server
 import (
 	"io"
 	"net"
-	"strings"
 
 	"github.com/sebzz2k2/vaultic/cmd"
 	"github.com/sebzz2k2/vaultic/lexer"
@@ -21,8 +20,7 @@ func readBuffer(reader io.Reader) ([]byte, bool) {
 	}
 	return b[:bn], false
 }
-func parse(tokens []lexer.Token) {
-}
+
 func handleClient(client net.Conn) {
 	for {
 		buff, beof := readBuffer(client)
@@ -30,26 +28,10 @@ func handleClient(client net.Conn) {
 			break
 		}
 		tkns := lexer.Tokenize(string(buff))
-		parse(tkns) // This is a dummy function to show how to use the lexer
-		tokens := utils.Tokenize(buff)
-		cmd := cmd.CommandFactory(tokens[0])
-		if cmd == nil {
-			utils.WriteToClient(client, "Invalid command\n")
-			utils.WriteToClient(client, "> ")
-			continue
-		}
-		isValidArgCount := cmd.Validate(len(tokens) - 1)
-		if !isValidArgCount {
-			utils.WriteToClient(client, "Expected syntax is: "+utils.CmdArgsErrors[strings.ToLower(tokens[0])]+"\n")
-			utils.WriteToClient(client, "> ")
-			continue
-		}
-
-		val, err := cmd.Process(tokens[1:])
+		val, err := cmd.ProcessCommand(tkns)
 		if err != nil {
-			utils.WriteToClient(client, err.Error())
+			utils.WriteToClient(client, err.Error()+"\n")
 		} else {
-
 			utils.WriteToClient(client, val+"\n")
 		}
 		utils.WriteToClient(client, "> ")

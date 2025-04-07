@@ -1,31 +1,95 @@
 package cmd
 
 import (
+	"fmt"
 	"io"
 	"os"
+	"reflect"
+	"strings"
 	"time"
 
 	"github.com/sebzz2k2/vaultic/kv_store/storage"
+	"github.com/sebzz2k2/vaultic/lexer"
 	"github.com/sebzz2k2/vaultic/utils"
 )
 
-type Command interface {
-	Process(kv []string) (string, error)
-	Validate(argsCount int) bool
+func validateArgsAndCount(t []lexer.Token) (bool, error) {
+	if len(t) == 0 {
+		return false, fmt.Errorf("no tokens")
+	}
+	if utils.CmdArgs[strings.ToUpper(t[0].Value)] != len(t)-1 {
+		return false, fmt.Errorf("wrong arg count")
+	}
+	for _, tok := range t[1:] {
+		if tok.Kind != lexer.VALUE {
+			return false, fmt.Errorf("invalid token %s", tok.Value)
+		}
+	}
+	return true, nil
 }
 
-type GET struct {
+var processors = map[lexer.TokenKind]any{
+	lexer.CMD_GET: ProcessGet,
+	lexer.CMD_SET: ProcessSet,
 }
 
-const ()
+func ProcessCommand(tokens []lexer.Token) (string, error) {
+	if len(tokens) == 0 {
+		return "", fmt.Errorf("no tokens provided")
+	}
 
-func (g GET) Process(kn []string) (string, error) {
+	cmd := tokens[0]
+
+	if _, ok := processors[cmd.Kind]; !ok {
+		return "", fmt.Errorf("invalid command: %s", cmd.Value)
+	}
+
+	isValidArgCount, err := validateArgsAndCount(tokens)
+	if err != nil {
+		return "", err
+	}
+	if !isValidArgCount {
+		return "", fmt.Errorf("invalid argument count for command: %s", cmd.Value)
+	}
+
+	fn, ok := processors[cmd.Kind]
+	if !ok {
+		return "", fmt.Errorf("unknown command: %s", cmd.Value)
+	}
+
+	fnValue := reflect.ValueOf(fn)
+
+	args := tokens[1:]
+	reflectArgs := make([]reflect.Value, len(args))
+	for i, tok := range args {
+		reflectArgs[i] = reflect.ValueOf(tok.Value)
+	}
+
+	results := fnValue.Call(reflectArgs)
+
+	if len(results) != 2 {
+		return "", fmt.Errorf("unexpected number of return values")
+	}
+
+	strResult, ok := results[0].Interface().(string)
+	if !ok {
+		return "", fmt.Errorf("first return value not string")
+	}
+
+	if !results[1].IsNil() {
+		err = results[1].Interface().(error)
+	}
+
+	return strResult, err
+}
+
+func ProcessGet(key string) (string, error) {
 	file, err := os.Open(utils.FILENAME)
 	if err != nil {
 		return "", err
 	}
 	defer file.Close()
-	start, end, bool := utils.GetIndexVal(kn[0])
+	start, end, bool := utils.GetIndexVal(key)
 	if bool {
 		_, err := file.Seek(int64(start), io.SeekStart)
 		if err != nil {
@@ -41,15 +105,7 @@ func (g GET) Process(kn []string) (string, error) {
 	return "(nil)", nil
 }
 
-func (g GET) Validate(argsCount int) bool {
-	return utils.CmdArgs[utils.CommandGet] == argsCount
-}
-
-type SET struct{}
-
-func (s SET) Process(kv []string) (string, error) {
-	key := kv[0]
-	val := kv[1]
+func ProcessSet(key, val string) (string, error) {
 	now := time.Now()
 	epochSeconds := now.Unix()
 
@@ -72,23 +128,4 @@ func (s SET) Process(kv []string) (string, error) {
 		return "", err
 	}
 	return utils.SUCCESS, nil
-}
-func (s SET) Validate(argsCount int) bool {
-	return utils.CmdArgs[utils.CommandSet] == argsCount
-}
-
-func CommandFactory(command string) Command {
-	switch command {
-	case utils.CommandGet:
-		{
-			return GET{}
-		}
-	case utils.CommandSet:
-		{
-			return SET{}
-		}
-
-	default:
-		return nil
-	}
 }

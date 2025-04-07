@@ -22,7 +22,7 @@ type regexHandler func(lex *lexer, regex *regexp.Regexp)
 func symbolHandler(lex *lexer, regex *regexp.Regexp) {
 	match := regex.FindString(lex.input[lex.pos:])
 
-	if kind, ok := reserved_literal[match]; ok {
+	if kind, ok := reserved_literal[strings.ToUpper(match)]; ok {
 		lex.push(Token{Kind: kind, Value: match})
 	} else {
 		lex.push(Token{Kind: VALUE, Value: match})
@@ -73,6 +73,5 @@ func Tokenize(input string) []Token {
 		}
 	}
 
-	l.push(Token{Kind: NEW_LINE, Value: "nl"})
 	return l.tokens
 }

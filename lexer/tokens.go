@@ -1,6 +1,10 @@
 package lexer
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/sebzz2k2/vaultic/utils"
+)
 
 type TokenKind int
 
@@ -12,7 +16,6 @@ const (
 	CMD_EXISTS
 	CMD_KEYS
 
-	NEW_LINE
 	VALUE
 	WHITESPACE
 )
@@ -39,11 +42,11 @@ func NewToken(kind TokenKind, value string) Token {
 }
 
 var reserved_literal map[string]TokenKind = map[string]TokenKind{
-	"GET":    CMD_GET,
-	"SET":    CMD_SET,
-	"DEL":    CMD_DEL,
-	"EXISTS": CMD_EXISTS,
-	"KEYS":   CMD_KEYS,
+	utils.CommandGet:    CMD_GET,
+	utils.CommandSet:    CMD_SET,
+	utils.CommandDel:    CMD_DEL,
+	utils.CommandExists: CMD_EXISTS,
+	utils.CommandKeys:   CMD_KEYS,
 }
 
 func TokenKindToString(kind TokenKind) string {
@@ -58,8 +61,6 @@ func TokenKindToString(kind TokenKind) string {
 		return "EXISTS"
 	case CMD_KEYS:
 		return "KEYS"
-	case NEW_LINE:
-		return "NEW_LINE"
 	case VALUE:
 		return "VALUE"
 	case WHITESPACE:
