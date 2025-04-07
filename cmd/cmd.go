@@ -29,8 +29,9 @@ func validateArgsAndCount(t []lexer.Token) (bool, error) {
 }
 
 var processors = map[lexer.TokenKind]any{
-	lexer.CMD_GET: ProcessGet,
-	lexer.CMD_SET: ProcessSet,
+	lexer.CMD_GET: get,
+	lexer.CMD_SET: set,
+	lexer.CMD_DEL: del,
 }
 
 func ProcessCommand(tokens []lexer.Token) (string, error) {
@@ -83,7 +84,7 @@ func ProcessCommand(tokens []lexer.Token) (string, error) {
 	return strResult, err
 }
 
-func ProcessGet(key string) (string, error) {
+func get(key string) (string, error) {
 	file, err := os.Open(utils.FILENAME)
 	if err != nil {
 		return "", err
@@ -105,7 +106,7 @@ func ProcessGet(key string) (string, error) {
 	return "(nil)", nil
 }
 
-func ProcessSet(key, val string) (string, error) {
+func set(key, val string) (string, error) {
 	now := time.Now()
 	epochSeconds := now.Unix()
 
@@ -128,4 +129,9 @@ func ProcessSet(key, val string) (string, error) {
 		return "", err
 	}
 	return utils.SUCCESS, nil
+}
+
+func del(key string) (string, error) {
+	fmt.Println("del")
+	return "OK", nil
 }
