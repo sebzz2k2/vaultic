@@ -24,6 +24,15 @@ func GetIndexVal(key string) (uint32, uint32, bool) {
 	return 0, 0, false
 }
 
+func DeleteIndexKey(key string) {
+	Data.Delete(key)
+}
+
+func IsPresent(key string) bool {
+	_, exists := Data.Load(key)
+	return exists
+}
+
 func PrintIndexMap() {
 	Data.Range(func(key, value interface{}) bool {
 		fmt.Printf("%s: %d %d\n", key.(string), value.(IndexValue).Start, value.(IndexValue).End)

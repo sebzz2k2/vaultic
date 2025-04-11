@@ -49,7 +49,6 @@ func DecodeData(encoded []byte) (map[string]interface{}, error) {
 	if computedCRC != keyValCRC {
 		return nil, errors.New("CRC check failed")
 	}
-
 	return map[string]interface{}{
 		"totalLength": totalLength,
 		"version":     version,

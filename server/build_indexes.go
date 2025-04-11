@@ -9,58 +9,67 @@ import (
 )
 
 type IndexBuilder struct {
-	filename string
+	filename  string
+	delimiter byte
 }
 
-func NewIndexBuilder(filename string) *IndexBuilder {
-	return &IndexBuilder{filename: filename}
+func NewIndexBuilder(filename string, delimiter byte) *IndexBuilder {
+	return &IndexBuilder{filename: filename, delimiter: delimiter}
 }
 
 func bytesDecode(val []byte, decodedData *[]interface{}) {
 	if len(val) < 4 {
 		return
 	}
-	len := int(val[0])<<24 | int(val[1])<<16 | int(val[2])<<8 | int(val[3])
-	entry := make([]byte, len)
-	copy(entry, val[:len])
+	length := int(val[0])<<24 | int(val[1])<<16 | int(val[2])<<8 | int(val[3])
+
+	if len(val) < length {
+		return // guard against invalid/malformed data
+	}
+
+	entry := make([]byte, length)
+	copy(entry, val[:length])
+
 	decode, err := storage.DecodeData(entry)
 	if err != nil {
 		logger.Errorf("Error decoding data: %s", err.Error())
 		return
 	}
 	*decodedData = append(*decodedData, decode)
-	bytesDecode(val[len:], decodedData)
+	bytesDecode(val[length:], decodedData)
 }
 
 func (ib *IndexBuilder) BuildIndexes() error {
-	file, err := os.Open(ib.filename)
-	if err != nil {
-		if os.IsNotExist(err) {
-			logger.Warnf("File %s does not exist", ib.filename)
-			return nil
-		} else {
-			return err
-		}
-	}
-	defer file.Close()
 	fileBytes, err := os.ReadFile(ib.filename)
 	if err != nil {
 		return err
 	}
-	var decodedData []interface{}
 
+	var decodedData []interface{}
 	bytesDecode(fileBytes, &decodedData)
 
 	offset := uint32(0)
-	for _, val := range decodedData {
-		if val == nil {
+	for _, v := range decodedData {
+		entry, ok := v.(map[string]interface{})
+		if !ok {
 			continue
 		}
-		offset += val.(map[string]interface{})["totalLength"].(uint32)
-		valLen := val.(map[string]interface{})["valueLen"].(uint32)
+		key := entry["key"].(string)
+		valLen := entry["valueLen"].(uint32)
+		totalLen := entry["totalLength"].(uint32)
+		offset += totalLen
 		start := offset - valLen
-		key := val.(map[string]interface{})["key"].(string)
+
+		flags := entry["flags"].(map[string]interface{})
+		if flags["deleted"].(bool) {
+			if utils.IsPresent(key) {
+				utils.DeleteIndexKey(key)
+			}
+			continue
+		}
+
 		utils.SetIndexKey(key, start, offset)
 	}
+
 	return nil
 }

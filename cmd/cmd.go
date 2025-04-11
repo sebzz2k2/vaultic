@@ -13,6 +13,12 @@ import (
 	"github.com/sebzz2k2/vaultic/utils"
 )
 
+var processors = map[lexer.TokenKind]any{
+	lexer.CMD_GET: get,
+	lexer.CMD_SET: set,
+	lexer.CMD_DEL: del,
+}
+
 func validateArgsAndCount(t []lexer.Token) (bool, error) {
 	if len(t) == 0 {
 		return false, fmt.Errorf("no tokens")
@@ -26,12 +32,6 @@ func validateArgsAndCount(t []lexer.Token) (bool, error) {
 		}
 	}
 	return true, nil
-}
-
-var processors = map[lexer.TokenKind]any{
-	lexer.CMD_GET: get,
-	lexer.CMD_SET: set,
-	lexer.CMD_DEL: del,
 }
 
 func ProcessCommand(tokens []lexer.Token) (string, error) {
@@ -132,6 +132,28 @@ func set(key, val string) (string, error) {
 }
 
 func del(key string) (string, error) {
-	fmt.Println("del")
+	_, _, bool := utils.GetIndexVal(key)
+	if !bool {
+		return "(nil)", nil
+	}
+	now := time.Now()
+	epochSeconds := now.Unix()
+
+	setVal, _ := storage.EncodeData(1, true, uint64(epochSeconds), key, "(nil)")
+	file, err := os.OpenFile(utils.FILENAME, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return "", err
+	}
+
+	_, err = file.Seek(0, io.SeekEnd)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+	_, err = file.Write(setVal)
+	if err != nil {
+		return "", err
+	}
+	utils.DeleteIndexKey(key)
 	return "OK", nil
 }
