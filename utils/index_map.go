@@ -33,6 +33,15 @@ func IsPresent(key string) bool {
 	return exists
 }
 
+func GetAllKeys() []string {
+	keys := []string{}
+	Data.Range(func(key, value interface{}) bool {
+		keys = append(keys, key.(string))
+		return true
+	})
+	return keys
+}
+
 func PrintIndexMap() {
 	Data.Range(func(key, value interface{}) bool {
 		fmt.Printf("%s: %d %d\n", key.(string), value.(IndexValue).Start, value.(IndexValue).End)

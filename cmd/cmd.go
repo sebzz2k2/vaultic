@@ -14,9 +14,11 @@ import (
 )
 
 var processors = map[lexer.TokenKind]any{
-	lexer.CMD_GET: get,
-	lexer.CMD_SET: set,
-	lexer.CMD_DEL: del,
+	lexer.CMD_GET:    get,
+	lexer.CMD_SET:    set,
+	lexer.CMD_DEL:    del,
+	lexer.CMD_EXISTS: exists,
+	lexer.CMD_KEYS:   keys,
 }
 
 func validateArgsAndCount(t []lexer.Token) (bool, error) {
@@ -156,4 +158,20 @@ func del(key string) (string, error) {
 	}
 	utils.DeleteIndexKey(key)
 	return "OK", nil
+}
+
+func exists(key string) (string, error) {
+	_, _, bool := utils.GetIndexVal(key)
+	if bool {
+		return "true", nil
+	}
+	return "false", nil
+}
+
+func keys() (string, error) {
+	keys := utils.GetAllKeys()
+	if len(keys) == 0 {
+		return "(nil)", nil
+	}
+	return strings.Join(keys, ", "), nil
 }
