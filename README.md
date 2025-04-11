@@ -1,6 +1,8 @@
 # Vaultic Storage Encoding Format
 ## Data Encoding Layout
 
+https://sebzz.hashnode.dev/build-your-own-key-value-store
+
 Each entry in the key-value (KV) store is encoded using the following structured format:
 
 ```
