@@ -36,9 +36,11 @@ func (ib *IndexBuilder) BuildIndexes() error {
 	file, err := os.Open(ib.filename)
 	if err != nil {
 		if os.IsNotExist(err) {
-			logger.Errorf("File %s does not exist", ib.filename)
+			logger.Warnf("File %s does not exist", ib.filename)
+			return nil
+		} else {
+			return err
 		}
-		return err
 	}
 	defer file.Close()
 	fileBytes, err := os.ReadFile(ib.filename)

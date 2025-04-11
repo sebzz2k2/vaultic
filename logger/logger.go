@@ -9,6 +9,7 @@ var (
 	Mode  = "dev"
 	Info  *log.Logger
 	Error *log.Logger
+	Warn  *log.Logger
 )
 
 func init() {
@@ -25,6 +26,7 @@ func init() {
 
 	Info = log.New(output, "INFO: ", log.Ldate|log.Ltime)
 	Error = log.New(output, "ERROR: ", log.Ldate|log.Ltime)
+	Warn = log.New(output, "WARN: ", log.Ldate|log.Ltime)
 
 }
 
@@ -34,4 +36,8 @@ func Infof(format string, v ...interface{}) {
 
 func Errorf(format string, v ...interface{}) {
 	Error.Printf(format, v...)
+}
+
+func Warnf(format string, v ...interface{}) {
+	Warn.Printf(format, v...)
 }
