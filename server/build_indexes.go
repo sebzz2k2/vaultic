@@ -9,12 +9,11 @@ import (
 )
 
 type IndexBuilder struct {
-	filename  string
-	delimiter byte
+	filename string
 }
 
-func NewIndexBuilder(filename string, delimiter byte) *IndexBuilder {
-	return &IndexBuilder{filename: filename, delimiter: delimiter}
+func NewIndexBuilder(filename string) *IndexBuilder {
+	return &IndexBuilder{filename: filename}
 }
 
 func bytesDecode(val []byte, decodedData *[]interface{}) {

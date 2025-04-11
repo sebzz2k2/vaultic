@@ -7,18 +7,9 @@ import (
 )
 
 func main() {
-	// encoded := storage.EncodeData(1, false, 1234567890, "kekjvkgvkgvkhvkhblbljblblhblby", "valueyuy")
-
-	// logger.Infof("Encoded data: %v", encoded)
-	// decoded, err := storage.DecodeData(encoded)
-	// if err != nil {
-	// 	logger.Errorf("Error decoding data: %s", err.Error())
-	// 	return
-	// }
-	// logger.Infof("Decoded data: %v", decoded)
 	logger.Infof("Starting Vaultic server")
 	logger.Infof("Building index")
-	b := server.NewIndexBuilder(utils.FILENAME, utils.DELIMITER[0])
+	b := server.NewIndexBuilder(utils.FILENAME)
 	err := b.BuildIndexes()
 	if err != nil {
 		logger.Errorf("Error building index %s", err.Error())
