@@ -9,12 +9,11 @@ import (
 )
 
 type IndexBuilder struct {
-	filename  string
-	delimiter byte
+	filename string
 }
 
-func NewIndexBuilder(filename string, delimiter byte) *IndexBuilder {
-	return &IndexBuilder{filename: filename, delimiter: delimiter}
+func NewIndexBuilder(filename string) *IndexBuilder {
+	return &IndexBuilder{filename: filename}
 }
 
 func bytesDecode(val []byte, decodedData *[]interface{}) {
@@ -36,6 +35,9 @@ func bytesDecode(val []byte, decodedData *[]interface{}) {
 func (ib *IndexBuilder) BuildIndexes() error {
 	file, err := os.Open(ib.filename)
 	if err != nil {
+		if os.IsNotExist(err) {
+			logger.Errorf("File %s does not exist", ib.filename)
+		}
 		return err
 	}
 	defer file.Close()
