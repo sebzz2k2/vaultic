@@ -15,11 +15,15 @@ import (
 // Fields:
 //   - Key: The unique identifier for the node.
 //   - Value: The value associated with the key.
+//   - Deleted: A boolean flag indicating whether the node has been deleted.
+//   - Ts: A timestamp indicating when the node was last modified.
 //   - Next: An array of pointers to the next nodes at different levels.
 type SkipListNode struct {
-	Key   string
-	Value string
-	Next  []*SkipListNode
+	Key     string
+	Value   string
+	Deleted bool
+	Ts      uint64
+	Next    []*SkipListNode
 }
 
 // SkipList represents a probabilistic data structure that allows for fast
@@ -87,7 +91,7 @@ func (s *SkipList) randomHeight() int {
 // to the appropriate nodes in the skip list. The function updates the
 // forward pointers of the nodes that precede the new node at each level.
 // Finally, the length of the skip list is incremented.
-func (s *SkipList) Insert(key, value string) {
+func (s *SkipList) Insert(ts uint64, deleted bool, key, value string) {
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
@@ -102,7 +106,10 @@ func (s *SkipList) Insert(key, value string) {
 	}
 
 	if current.Next[0] != nil && current.Next[0].Key == key {
-		current.Next[0].Value = value
+		node := current.Next[0]
+		node.Value = value
+		node.Deleted = deleted
+		node.Ts = ts
 		return
 	}
 
@@ -115,9 +122,11 @@ func (s *SkipList) Insert(key, value string) {
 	}
 
 	newNode := &SkipListNode{
-		Key:   key,
-		Value: value,
-		Next:  make([]*SkipListNode, newHeight),
+		Key:     key,
+		Value:   value,
+		Deleted: deleted,
+		Ts:      ts,
+		Next:    make([]*SkipListNode, newHeight),
 	}
 
 	for i := 0; i < newHeight; i++ {
@@ -147,48 +156,12 @@ func (s *SkipList) Search(key string) (string, bool) {
 
 	current = current.Next[0]
 	if current != nil && current.Key == key {
+		if current.Deleted {
+			return "", false // key exists, but is deleted
+		}
 		return current.Value, true
 	}
 	return "", false
-}
-
-// Delete removes a key-value pair from the skip list. The function first
-// acquires a lock to ensure thread safety. It then searches for the
-// specified key and updates the forward pointers of the nodes that
-// precede the key. If the key is found, it is removed from the skip list.
-// The function also updates the levels of the skip list if necessary.
-// Finally, the length of the skip list is decremented.
-func (s *SkipList) Delete(key string) {
-	s.Mutex.Lock()
-	defer s.Mutex.Unlock()
-
-	update := make([]*SkipListNode, s.Height)
-	current := s.Head
-
-	for i := s.Level - 1; i >= 0; i-- {
-		for current.Next[i] != nil && current.Next[i].Key < key {
-			current = current.Next[i]
-		}
-		update[i] = current
-	}
-
-	current = current.Next[0]
-	if current == nil || current.Key != key {
-		return
-	}
-
-	for i := 0; i < s.Level; i++ {
-		if update[i].Next[i] != current {
-			break
-		}
-		update[i].Next[i] = current.Next[i]
-	}
-
-	s.Length--
-
-	for s.Level > 1 && s.Head.Next[s.Level-1] == nil {
-		s.Level--
-	}
 }
 
 // GetLength returns the current number of elements in the skip list.
@@ -198,35 +171,6 @@ func (s *SkipList) GetLength() int {
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 	return s.Length
-}
-
-// GetLevel returns the current highest level in the skip list.
-// This function is useful for understanding the structure of the skip list
-// and can help in analyzing the performance of search, insertion,
-// and deletion operations.
-func (s *SkipList) GetLevel() int {
-	s.Mutex.Lock()
-	defer s.Mutex.Unlock()
-	return s.Level
-}
-
-// GetHeight returns the maximum height of the skip list.
-// This function is useful for understanding the potential maximum
-// number of levels in the skip list and can help in analyzing
-// the performance of search, insertion, and deletion operations.
-func (s *SkipList) GetHeight() int {
-	s.Mutex.Lock()
-	defer s.Mutex.Unlock()
-	return s.Height
-}
-
-// GetHead returns the head node of the skip list.
-// This function is useful for accessing the sentinel node,
-// which simplifies insertion and deletion operations.
-func (s *SkipList) GetHead() *SkipListNode {
-	s.Mutex.Lock()
-	defer s.Mutex.Unlock()
-	return s.Head
 }
 
 // GetAllKeys returns a slice of all keys currently stored in the skip list.
