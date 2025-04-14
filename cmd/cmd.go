@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	storage "github.com/sebzz2k2/vaultic/kv_store/wal"
+	storage "github.com/sebzz2k2/vaultic/kv_store"
 	"github.com/sebzz2k2/vaultic/lexer"
 	"github.com/sebzz2k2/vaultic/utils"
 )
@@ -112,7 +112,7 @@ func set(key, val string) (string, error) {
 	now := time.Now()
 	epochSeconds := now.Unix()
 
-	setVal, totalLen := storage.EncodeData(1, false, uint64(epochSeconds), false, key, val)
+	setVal, totalLen := storage.EncodeWAL(1, false, uint64(epochSeconds), false, key, val)
 
 	file, err := os.OpenFile(utils.FILENAME, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -141,7 +141,7 @@ func del(key string) (string, error) {
 	now := time.Now()
 	epochSeconds := now.Unix()
 
-	setVal, _ := storage.EncodeData(1, true, uint64(epochSeconds), false, key, "(nil)")
+	setVal, _ := storage.EncodeWAL(1, true, uint64(epochSeconds), false, key, "(nil)")
 	file, err := os.OpenFile(utils.FILENAME, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return "", err

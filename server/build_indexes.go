@@ -3,7 +3,7 @@ package server
 import (
 	"os"
 
-	storage "github.com/sebzz2k2/vaultic/kv_store/wal"
+	storage "github.com/sebzz2k2/vaultic/kv_store"
 	"github.com/sebzz2k2/vaultic/logger"
 	"github.com/sebzz2k2/vaultic/utils"
 )
@@ -29,7 +29,7 @@ func bytesDecode(val []byte, decodedData *[]interface{}) {
 	entry := make([]byte, length)
 	copy(entry, val[:length])
 
-	decode, err := storage.DecodeData(entry)
+	decode, err := storage.DecodeWAL(entry)
 	if err != nil {
 		logger.Errorf("Error decoding data: %s", err.Error())
 		return
