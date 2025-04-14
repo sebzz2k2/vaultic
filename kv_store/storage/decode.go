@@ -7,7 +7,7 @@ import (
 	"github.com/sebzz2k2/vaultic/utils"
 )
 
-func DecodeFlags(encoded byte) map[string]interface{} {
+func decodeFlags(encoded byte) map[string]interface{} {
 	flags := make([]bool, 8)
 	for i := 0; i < 8; i++ {
 		flags[i] = (encoded & (1 << i)) != 0
@@ -15,7 +15,8 @@ func DecodeFlags(encoded byte) map[string]interface{} {
 	return map[string]interface{}{
 		"deleted":    flags[0],
 		"compressed": flags[1],
-		"reserved":   flags[3:7],
+		"checkpoint": flags[2],
+		"reserved":   flags[3:],
 	}
 }
 func DecodeData(encoded []byte) (map[string]interface{}, error) {
@@ -30,7 +31,7 @@ func DecodeData(encoded []byte) (map[string]interface{}, error) {
 
 	version := encoded[4]
 	flags := encoded[5]
-	decodedFlags := DecodeFlags(flags)
+	decodedFlags := decodeFlags(flags)
 	keyValCRC := binary.BigEndian.Uint32(encoded[6:10])
 	ts := binary.BigEndian.Uint64(encoded[10:18])
 

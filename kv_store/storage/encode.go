@@ -7,7 +7,7 @@ import "github.com/sebzz2k2/vaultic/utils"
 1st bit version 0 or 1
 3rd - 7th bit reserved 0 for now
 */
-func EncodeFlags(flags ...bool) byte {
+func encodeFlags(flags ...bool) byte {
 	var encoded byte
 	for i, flag := range flags {
 		if flag {
@@ -28,7 +28,7 @@ func EncodeFlags(flags ...bool) byte {
 <key length> bytes key
 <value length> bytes value
 */
-func EncodeData(version int, deleted bool, ts uint64, key, value string) ([]byte, int) {
+func EncodeData(version int, deleted bool, ts uint64, checkpoint bool, key, value string) ([]byte, int) {
 	keyLen := uint16(len(key))     // 2 bytes for key length
 	valueLen := uint32(len(value)) // 4 bytes for value length
 
@@ -41,7 +41,7 @@ func EncodeData(version int, deleted bool, ts uint64, key, value string) ([]byte
 	encoded = append(encoded,
 		byte(totalLength>>24), byte(totalLength>>16), byte(totalLength>>8), byte(totalLength))
 
-	flags := EncodeFlags(deleted, false)
+	flags := encodeFlags(deleted, false, checkpoint)
 	encoded = append(encoded, byte(version))
 	encoded = append(encoded, flags)
 
