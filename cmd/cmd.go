@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sebzz2k2/vaultic/kv_store/storage"
+	storage "github.com/sebzz2k2/vaultic/kv_store/wal"
 	"github.com/sebzz2k2/vaultic/lexer"
 	"github.com/sebzz2k2/vaultic/utils"
 )
