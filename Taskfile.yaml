@@ -1,0 +1,91 @@
+version: '3'
+
+vars:
+  MODULE: github.com/sebzz2k2/vaultic
+  BINARY_NAME: vaultic
+  BUILD_DIR: ./build
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  install-deps:
+    desc: Install development dependencies
+    cmds:
+      - go mod download
+      - go install github.com/air-verse/air@latest
+
+  dev:
+    desc: Run the application in development mode with hot reload
+    deps: [install-deps]
+    cmds:
+      - air
+    env:
+      CGO_ENABLED: 0
+
+  build:
+    desc: Build the application
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}} .
+    generates:
+      - "{{.BUILD_DIR}}/{{.BINARY_NAME}}"
+
+  run:
+    desc: Build and run the application
+    deps: [build]
+    cmds:
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}}
+
+  test:
+    desc: Run all tests
+    cmds:
+      - go test -v ./...
+
+  test-coverage:
+    desc: Run tests with coverage report
+    cmds:
+      - go test -v -coverprofile=coverage.out ./...
+      - go tool cover -html=coverage.out -o coverage.html
+      - echo "Coverage report generated at coverage.html"
+
+  test-race:
+    desc: Run tests with race condition detection
+    cmds:
+      - go test -race -v ./...
+
+  clean:
+    desc: Clean build artifacts and cache
+    cmds:
+      - rm -rf {{.BUILD_DIR}}
+      - rm -f coverage.out coverage.html
+      - go clean -cache
+      - go clean -testcache
+
+  lint:
+    desc: Run linter (requires golangci-lint)
+    cmds:
+      - golangci-lint run
+
+  fmt:
+    desc: Format code
+    cmds:
+      - go fmt ./...
+
+  vet:
+    desc: Run go vet
+    cmds:
+      - go vet ./...
+
+  mod-tidy:
+    desc: Tidy up go.mod
+    cmds:
+      - go mod tidy
+
+  check:
+    desc: Run all checks (format, vet, test)
+    deps: [fmt, vet, test]
+    cmds:
+      - echo "All checks passed!"

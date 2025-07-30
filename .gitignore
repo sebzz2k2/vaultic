@@ -1,1 +1,13 @@
 vaultic
+
+# Build artifacts
+build/
+tmp/
+
+# Test coverage
+coverage.out
+coverage.html
+
+# Development files
+.air.toml.bak
+build-errors.log
