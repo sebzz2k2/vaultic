@@ -16,7 +16,7 @@ import (
 func main() {
 	err := config.InitConfig()
 	if err != nil {
-		panic("Failed to load config: " + err.Error())
+		panic(fmt.Errorf(config.ErrorFailedToLoadConfig, err))
 	}
 
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
@@ -29,17 +29,17 @@ func main() {
 		FilePath:  config.Global.LogPath,
 	})
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to set up logger")
+		log.Fatal().Err(err).Msg(config.ErrorFailedToSetUpLogger)
 	}
 
-	log.Info().Msg("Starting Vaultic server")
-	log.Info().Msg("Building index")
+	log.Info().Msg(config.InfoStartingServer)
+	log.Info().Msg(config.InfoBuildingIndex)
 	b := server.NewIndexBuilder(utils.FILENAME)
 	err = b.BuildIndexes()
 	if err != nil {
-		log.Error().Err(err).Msg("Error building index")
+		log.Error().Err(err).Msg(config.ErrorBuildIndex)
 		return
 	}
-	log.Info().Msg("Finished building index")
+	log.Info().Msg(config.InfoFinishedIndex)
 	server.Start(fmt.Sprintf(":%d", config.Global.Port))
 }

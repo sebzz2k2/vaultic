@@ -20,4 +20,6 @@ const (
 	ErrorMismatchedKeyValueLengths = "mismatched key/value lengths"
 	ErrorInsufficientData          = "invalid data: insufficient length"
 	ErrorDataLengthMismatch        = "data length mismatch"
+	ErrorFailedToLoadConfig        = "failed to load config: %s"
+	ErrorFailedToSetUpLogger       = "failed to set up logger"
 )

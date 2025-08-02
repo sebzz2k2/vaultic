@@ -9,7 +9,6 @@ const (
 
 	FILENAME  = "vaultic"
 	DELIMITER = ":"
-	SUCCESS   = "OK"
 )
 
 var CmdArgs = map[string]int{
