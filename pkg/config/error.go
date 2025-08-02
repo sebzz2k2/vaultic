@@ -1,0 +1,23 @@
+package config
+
+const (
+	ErrorNoTokens                  = "no tokens provided"
+	ErrorInvalidCommand            = "invalid command: %s"
+	ErrorUnknownCommand            = "unknown command: %s"
+	ErrorWrongArgCount             = "invalid argument count for command: %s"
+	ErrorInvalidToken              = "invalid token %s"
+	ErrorFirstReturnNotStr         = "first return value not string"
+	ErrorUnexpectedReturn          = "unexpected number of return values"
+	ErrorFileOpen                  = "failed to open file"
+	ErrorFileWrite                 = "failed to write to file"
+	ErrorFileSeek                  = "failed to seek in file"
+	ErrorFileRead                  = "failed to read from file"
+	ErrorBuildIndex                = "error building index"
+	ErrorDecodeData                = "error decoding data"
+	ErrorLoadConfig                = "failed to load config: %s"
+	ErrorSetupLogger               = "failed to set up logger"
+	ErrorCRCCheckFailed            = "crc check failed"
+	ErrorMismatchedKeyValueLengths = "mismatched key/value lengths"
+	ErrorInsufficientData          = "invalid data: insufficient length"
+	ErrorDataLengthMismatch        = "data length mismatch"
+)

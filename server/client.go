@@ -6,6 +6,7 @@ import (
 
 	"github.com/sebzz2k2/vaultic/cmd"
 	"github.com/sebzz2k2/vaultic/lexer"
+	"github.com/sebzz2k2/vaultic/pkg/config"
 	"github.com/sebzz2k2/vaultic/utils"
 )
 
@@ -30,10 +31,10 @@ func handleClient(client net.Conn) {
 		tkns := lexer.Tokenize(string(buff))
 		val, err := cmd.ProcessCommand(tkns)
 		if err != nil {
-			utils.WriteToClient(client, err.Error()+"\n")
+			utils.WriteToClient(client, err.Error()+config.NL)
 		} else {
-			utils.WriteToClient(client, val+"\n")
+			utils.WriteToClient(client, val+config.NL)
 		}
-		utils.WriteToClient(client, "> ")
+		utils.WriteToClient(client, config.PromptMessage)
 	}
 }

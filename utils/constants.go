@@ -9,7 +9,6 @@ const (
 
 	FILENAME  = "vaultic"
 	DELIMITER = ":"
-	NEWLINE   = "\n"
 	SUCCESS   = "OK"
 )
 

@@ -3,6 +3,8 @@ package lexer
 import (
 	"regexp"
 	"strings"
+
+	"github.com/sebzz2k2/vaultic/pkg/config"
 )
 
 type lexer struct {
@@ -62,7 +64,7 @@ func newLexer(input string) *lexer {
 	}
 }
 func Tokenize(input string) []Token {
-	l := newLexer(strings.TrimSuffix(input, "\n")) // we know that a command ends with a newline
+	l := newLexer(strings.TrimSuffix(input, config.NL)) // we know that a command ends with a newline
 	for !l.at_end() {
 		for _, p := range l.regex {
 			loc := p.pattern.FindStringIndex(l.input[l.pos:])
