@@ -3,8 +3,8 @@ package server
 import (
 	"os"
 
+	"github.com/rs/zerolog/log"
 	storage "github.com/sebzz2k2/vaultic/kv_store"
-	"github.com/sebzz2k2/vaultic/logger"
 	"github.com/sebzz2k2/vaultic/utils"
 )
 
@@ -31,7 +31,7 @@ func bytesDecode(val []byte, decodedData *[]interface{}) {
 
 	decode, err := storage.DecodeWAL(entry)
 	if err != nil {
-		logger.Errorf("Error decoding data: %s", err.Error())
+		log.Error().Err(err).Msg("Error decoding data")
 		return
 	}
 	*decodedData = append(*decodedData, decode)

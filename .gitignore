@@ -11,3 +11,5 @@ coverage.html
 # Development files
 .air.toml.bak
 build-errors.log
+
+logs/
