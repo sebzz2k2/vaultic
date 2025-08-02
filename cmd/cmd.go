@@ -131,7 +131,7 @@ func set(key, val string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return utils.SUCCESS, nil
+	return config.OKMessage, nil
 }
 
 func del(key string) (string, error) {
