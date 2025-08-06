@@ -8,6 +8,7 @@ const (
 	ErrorInvalidToken              = "invalid token %s"
 	ErrorFirstReturnNotStr         = "first return value not string"
 	ErrorUnexpectedReturn          = "unexpected number of return values"
+	ErrorNoFileFound               = "no file found at path: %s"
 	ErrorFileOpen                  = "failed to open file"
 	ErrorFileWrite                 = "failed to write to file"
 	ErrorFileSeek                  = "failed to seek in file"

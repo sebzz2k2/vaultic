@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/rs/zerolog/log"
@@ -42,6 +43,11 @@ func bytesDecode(val []byte, decodedData *[]interface{}) {
 func (ib *IndexBuilder) BuildIndexes() error {
 	fileBytes, err := os.ReadFile(ib.filename)
 	if err != nil {
+		if os.IsNotExist(err) {
+			log.Warn().Msgf(config.ErrorNoFileFound, ib.filename)
+			return nil
+		}
+		fmt.Println(err)
 		return err
 	}
 

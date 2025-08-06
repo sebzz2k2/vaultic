@@ -16,7 +16,7 @@ type Config struct {
 func DefaultConfig() Config {
 	return Config{
 		LogPath: "./logs/root.log",
-		Port:    5431,
+		Port:    5381,
 	}
 }
 
@@ -32,6 +32,7 @@ func loadConfig(path string) (Config, error) {
 	if err := decoder.Decode(&cfg); err != nil {
 		return cfg, err
 	}
+
 	return cfg, nil
 }
 

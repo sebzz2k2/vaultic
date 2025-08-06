@@ -1,3 +1,3 @@
 # Vaultic configuration file
 logpath: ./logs/root.log
-port: 5431
+port: 5381

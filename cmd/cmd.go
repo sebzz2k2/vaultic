@@ -90,6 +90,9 @@ func ProcessCommand(tokens []lexer.Token) (string, error) {
 func get(key string) (string, error) {
 	file, err := os.Open(utils.FILENAME)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return config.NilMessage, nil
+		}
 		return "", fmt.Errorf(config.ErrorFileOpen)
 	}
 	defer file.Close()
