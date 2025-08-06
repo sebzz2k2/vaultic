@@ -36,7 +36,7 @@ func loadConfig(path string) (Config, error) {
 }
 
 func InitConfig() error {
-	cfg, err := loadConfig("vaultic.yaml")
+	cfg, err := loadConfig("vaultic_config.yaml")
 	if err != nil {
 		return err
 	}
