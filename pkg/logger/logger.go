@@ -21,6 +21,17 @@ func Setup(cfg Config) error {
 	if cfg.LogToFile {
 		output, err = os.OpenFile(cfg.FilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		if err != nil {
+			if os.IsNotExist(err) {
+				// Create the log directory if it doesn't exist
+				if err := os.MkdirAll(cfg.FilePath[:len(cfg.FilePath)-len("root.log")], 0755); err != nil {
+					return err
+				}
+				output, err = os.OpenFile(cfg.FilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+				if err != nil {
+					return err
+				}
+
+			}
 			return err
 		}
 		log.Logger = log.Output(output)
