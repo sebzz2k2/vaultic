@@ -1,0 +1,8 @@
+
+services:
+  vaultic:
+    build:
+      context: .
+      dockerfile: TestContainer.Dockerfile
+    ports:
+      - "5381:5381"

@@ -1,0 +1,67 @@
+# Git and version control
+.git/
+.gitignore
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Build artifacts and binaries
+build/
+tmp/
+vaultic
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Logs and runtime files
+logs/
+*.log
+*.pid
+
+# Test files and coverage reports
+coverage.out
+coverage.html
+*_test.go
+tests/
+
+# Development and configuration files
+.air.toml
+.air.toml.bak
+build-errors.log
+vaultic_config.yaml
+
+# Docker files (don't need to copy these into the container)
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+test-container.compose.yml
+TestContainer.Dockerfile
+
+# Documentation (optional - uncomment if you don't need docs in container)
+# README.md
+# LICENSE
+
+# Go specific
+vendor/
+*.mod.bak
+*.sum.bak
+
+# Temporary files
+*.tmp
+*.temp
+
+.vaultic

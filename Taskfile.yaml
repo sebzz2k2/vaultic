@@ -89,3 +89,10 @@ tasks:
     deps: [fmt, vet, test]
     cmds:
       - echo "All checks passed!"
+
+  run:
+    desc: Run the application
+    deps: [build]
+    cmds:
+      - ./{{.BUILD_DIR}}/{{.BINARY_NAME}}
+      
