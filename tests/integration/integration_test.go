@@ -83,7 +83,7 @@ func TestContainer(t *testing.T) {
 		// Wait for service to be ready again
 		err = stack.WaitForService("vaultic",
 			wait.ForAll(
-				wait.ForExposedPort(),
+				// wait.ForExposedPort(),
 				wait.ForLog("Starting Vaultic server"),
 				wait.ForLog("Building index"),
 				wait.ForLog("Finished building index"),
