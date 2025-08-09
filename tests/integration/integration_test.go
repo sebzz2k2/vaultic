@@ -75,7 +75,6 @@ func TestContainer(t *testing.T) {
 
 	// Helper function to restart the container
 	restartContainer := func() {
-		t.Log("Restarting container...")
 		err := ctr.Stop(ctx, nil)
 		require.NoError(t, err)
 
@@ -93,85 +92,56 @@ func TestContainer(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	t.Log("=== Phase 1: Initial state without vaultic file ===")
+	// Helper functions for common operations
+	get := func(key string) string {
+		return execCommand(fmt.Sprintf(`echo "GET %s" | nc -w 1 localhost 5381`, key))
+	}
 
-	// Get value of variable a => should return (nil)
-	response := execCommand(`echo "GET a" | nc -w 1 localhost 5381`)
-	require.Contains(t, response, "(nil)", "Expected GET a to return (nil)")
+	set := func(key, value string) string {
+		return execCommand(fmt.Sprintf(`echo "SET %s %s" | nc -w 1 localhost 5381`, key, value))
+	}
 
-	// Set value of variable a as b => should return OK
-	response = execCommand(`echo "SET a b" | nc -w 1 localhost 5381`)
-	require.Contains(t, response, "OK", "Expected SET a b to return OK")
+	del := func(key string) string {
+		return execCommand(fmt.Sprintf(`echo "DEL %s" | nc -w 1 localhost 5381`, key))
+	}
 
-	// Get value of variable a => should return b
-	response = execCommand(`echo "GET a" | nc -w 1 localhost 5381`)
-	require.Contains(t, response, "b", "Expected GET a to return b")
+	keys := func() string {
+		return execCommand(`echo "KEYS" | nc -w 1 localhost 5381`)
+	}
 
-	t.Log("=== Phase 2: First restart - vaultic file should be present ===")
+	exists := func(key string) string {
+		return execCommand(fmt.Sprintf(`echo "EXISTS %s" | nc -w 1 localhost 5381`, key))
+	}
+
+	// Test initial state
+	require.Contains(t, get("a"), "(nil)")
+	require.Contains(t, set("a", "b"), "OK")
+	require.Contains(t, get("a"), "b")
+
+	// Test persistence after restart
 	restartContainer()
+	require.Contains(t, get("a"), "b")
 
-	// Verify vaultic file is present
-	response = execCommand(`ls -la | grep vaultic`)
-	require.NotEmpty(t, response, "Expected vaultic file to be present after restart")
+	// Update values
+	require.Contains(t, set("a", "x"), "OK")
+	require.Contains(t, set("b", "e"), "OK")
+	require.Contains(t, get("a"), "x")
+	require.Contains(t, get("b"), "e")
 
-	// Get value of variable a => should return b
-	response = execCommand(`echo "GET a" | nc -w 1 localhost 5381`)
-	require.Contains(t, response, "b", "Expected GET a to return b after restart")
-
-	// Set value of variable a as x => should return OK
-	response = execCommand(`echo "SET a x" | nc -w 1 localhost 5381`)
-	require.Contains(t, response, "OK", "Expected SET a x to return OK")
-
-	// Set value of variable b as e => should return OK
-	response = execCommand(`echo "SET b e" | nc -w 1 localhost 5381`)
-	require.Contains(t, response, "OK", "Expected SET b e to return OK")
-
-	// Get value of variable a => should return x
-	response = execCommand(`echo "GET a" | nc -w 1 localhost 5381`)
-	require.Contains(t, response, "x", "Expected GET a to return x")
-
-	// Get value of variable b => should return e
-	response = execCommand(`echo "GET b" | nc -w 1 localhost 5381`)
-	require.Contains(t, response, "e", "Expected GET b to return e")
-
-	t.Log("=== Phase 3: Second restart - verify persistence ===")
+	// Test persistence after second restart
 	restartContainer()
+	require.Contains(t, get("a"), "x")
+	require.Contains(t, get("b"), "e")
 
-	// Get value of variable a => should return x
-	response = execCommand(`echo "GET a" | nc -w 1 localhost 5381`)
-	require.Contains(t, response, "x", "Expected GET a to return x after second restart")
+	// Test deletion
+	require.Contains(t, del("b"), "OK")
+	require.Contains(t, get("b"), "(nil)")
 
-	// Get value of variable b => should return e
-	response = execCommand(`echo "GET b" | nc -w 1 localhost 5381`)
-	require.Contains(t, response, "e", "Expected GET b to return e after second restart")
-
-	// Delete b => should return OK
-	response = execCommand(`echo "DEL b" | nc -w 1 localhost 5381`)
-	require.Contains(t, response, "OK", "Expected DEL b to return OK")
-
-	// Get value of variable b => should return (nil)
-	response = execCommand(`echo "GET b" | nc -w 1 localhost 5381`)
-	require.Contains(t, response, "(nil)", "Expected GET b to return (nil) after deletion")
-
-	t.Log("=== Phase 4: Final restart - verify deletion persistence ===")
+	// Test deletion persistence after restart
 	restartContainer()
-
-	// Get value of variable b => should return (nil)
-	response = execCommand(`echo "GET b" | nc -w 1 localhost 5381`)
-	require.Contains(t, response, "(nil)", "Expected GET b to return (nil) after final restart")
-
-	// KEYS should return a
-	response = execCommand(`echo "KEYS" | nc -w 1 localhost 5381`)
-	require.Contains(t, response, "a", "Expected KEYS to return a")
-	require.NotContains(t, response, "b", "Expected KEYS to not contain b")
-
-	// EXISTS a should return true
-	response = execCommand(`echo "EXISTS a" | nc -w 1 localhost 5381`)
-	require.Contains(t, response, "true", "Expected EXISTS a to return true")
-
-	// EXISTS b should return false
-	response = execCommand(`echo "EXISTS b" | nc -w 1 localhost 5381`)
-	require.Contains(t, response, "false", "Expected EXISTS b to return false")
-
-	t.Log("=== All tests completed successfully ===")
+	require.Contains(t, get("b"), "(nil)")
+	require.Contains(t, keys(), "a")
+	require.NotContains(t, keys(), "b")
+	require.Contains(t, exists("a"), "true")
+	require.Contains(t, exists("b"), "false")
 }
