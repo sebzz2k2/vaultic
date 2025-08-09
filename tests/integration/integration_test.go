@@ -1,6 +1,5 @@
 package integration
 
-// function to create build test container with no-cache flag and run it. It should be buillt from docker-compose file
 import (
 	"context"
 	"fmt"
