@@ -1,160 +1,177 @@
-//go:build integration
-
 package integration
 
+// function to create build test container with no-cache flag and run it. It should be buillt from docker-compose file
 import (
 	"context"
+	"fmt"
+	"io"
 	"strings"
 	"testing"
-	"time"
 
-	testcontainers "github.com/testcontainers/testcontainers-go"
+	"github.com/stretchr/testify/require"
+	"github.com/testcontainers/testcontainers-go/modules/compose"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-// Helper to run a command in the container and get output
-func execCommand(ctx context.Context, container testcontainers.Container, cmd []string) (string, error) {
-	exitCode, stdout, stderr, err := container.Exec(ctx, cmd)
+func TestContainer(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	composeFile := "../../test-container.compose.yml"
+	stack, err := compose.NewDockerComposeWith(
+		compose.StackIdentifier("test-vaultic"),
+		compose.WithStackFiles(composeFile),
+	)
 	if err != nil {
-		return "", err
-	}
-	if exitCode != 0 {
-		return stderr.String(), nil
-	}
-	return stdout.String(), nil
-}
-
-func TestVaulticIntegration(t *testing.T) {
-	ctx := context.Background()
-
-	containerReq := testcontainers.ContainerRequest{
-		Image:        "golang:1.21",             // Use official Go image, mount local vaultic binary
-		Cmd:          []string{"sleep", "3600"}, // Keep container alive
-		WaitingFor:   wait.ForListeningPort("80").WithStartupTimeout(2 * time.Second),
-		AutoRemove:   true,
-		ExposedPorts: []string{"80"},
-		Mounts: testcontainers.Mounts(
-			testcontainers.BindMount("/vaultic/vaultic", "/vaultic/vaultic"), // Mount built binary
-		),
-		Entrypoint: []string{"/bin/sh", "-c"},
-		Env:        map[string]string{},
+		panic(err)
 	}
 
-	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: containerReq,
-		Started:          true,
-	})
+	err = stack.WaitForService("vaultic",
+		wait.ForAll(
+			wait.ForExposedPort(),
+			wait.ForLog("Starting Vaultic server"),
+			wait.ForLog("Building index"),
+			wait.ForLog("Finished building index"),
+		)).Up(ctx, compose.Wait(true))
 	if err != nil {
-		t.Fatalf("Failed to start container: %v", err)
+		t.Fatalf("Failed to start test container: %v", err)
 	}
 	defer func() {
-		_ = container.Terminate(ctx)
-	}()
-
-	// Helper to run vaultic commands
-	run := func(args ...string) string {
-		cmd := append([]string{"/vaultic/vaultic"}, args...)
-		out, err := execCommand(ctx, container, cmd)
+		err = stack.Down(
+			context.Background(),
+			compose.RemoveOrphans(true),
+			compose.RemoveVolumes(true),
+			compose.RemoveImagesLocal,
+		)
 		if err != nil {
-			t.Fatalf("Failed to exec %v: %v", args, err)
+			t.Fatalf("Failed to tear down test container: %v", err)
 		}
-		return strings.TrimSpace(out)
+	}()
+	serviceNames := stack.Services()
+
+	if len(serviceNames) == 0 {
+		t.Fatal("No services found in the test container stack")
 	}
 
-	// 1. No vaultic file
-	if _, err := execCommand(ctx, container, []string{"rm", "-f", "/vaultic/vaultic"}); err != nil {
-		t.Fatalf("Failed to remove vaultic file: %v", err)
-	}
-	t.Run("No vaultic file", func(t *testing.T) {
-		if got := run("get", "a"); got != "(nil)" {
-			t.Errorf("expected (nil), got %q", got)
-		}
-		if got := run("set", "a", "b"); !strings.Contains(got, "OK") {
-			t.Errorf("expected OK, got %q", got)
-		}
-		if got := run("get", "a"); got != "b" {
-			t.Errorf("expected b, got %q", got)
-		}
-	})
+	fmt.Println("Test container started successfully with services:")
 
-	// 2. Restart (simulate by stopping/starting container)
-	_ = container.StopLogProducer()
-	_ = container.Stop(ctx, nil)
-	container, err = testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: containerReq,
-		Started:          true,
-	})
+	// Test with the vaultic service
+	service := "vaultic"
+	ctr, err := stack.ServiceContainer(ctx, service)
 	if err != nil {
-		t.Fatalf("Failed to restart container: %v", err)
+		t.Fatalf("Failed to get container for service %s: %v", service, err)
 	}
 
-	t.Run("After restart, vaultic file present", func(t *testing.T) {
-		if got := run("get", "a"); got != "b" {
-			t.Errorf("expected b, got %q", got)
-		}
-		if got := run("set", "a", "x"); !strings.Contains(got, "OK") {
-			t.Errorf("expected OK, got %q", got)
-		}
-		if got := run("set", "b", "e"); !strings.Contains(got, "OK") {
-			t.Errorf("expected OK, got %q", got)
-		}
-		if got := run("get", "a"); got != "x" {
-			t.Errorf("expected x, got %q", got)
-		}
-		if got := run("get", "b"); got != "e" {
-			t.Errorf("expected e, got %q", got)
-		}
-	})
+	// Helper function to execute commands and get response
+	execCommand := func(cmd string) string {
+		_, reader, err := ctr.Exec(ctx, []string{"/bin/sh", "-c", cmd})
+		require.NoError(t, err)
 
-	// 3. Restart again
-	_ = container.StopLogProducer()
-	_ = container.Stop(ctx, nil)
-	container, err = testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: containerReq,
-		Started:          true,
-	})
-	if err != nil {
-		t.Fatalf("Failed to restart container: %v", err)
+		buf := new(strings.Builder)
+		_, err = io.Copy(buf, reader)
+		require.NoError(t, err)
+
+		return strings.TrimSpace(buf.String())
 	}
 
-	t.Run("After restart, del b", func(t *testing.T) {
-		if got := run("get", "a"); got != "x" {
-			t.Errorf("expected x, got %q", got)
-		}
-		if got := run("get", "b"); got != "e" {
-			t.Errorf("expected e, got %q", got)
-		}
-		if got := run("del", "b"); !strings.Contains(got, "OK") {
-			t.Errorf("expected OK, got %q", got)
-		}
-		if got := run("get", "b"); got != "(nil)" {
-			t.Errorf("expected (nil), got %q", got)
-		}
-	})
+	// Helper function to restart the container
+	restartContainer := func() {
+		t.Log("Restarting container...")
+		err := ctr.Stop(ctx, nil)
+		require.NoError(t, err)
 
-	// 4. Final restart
-	_ = container.StopLogProducer()
-	_ = container.Stop(ctx, nil)
-	container, err = testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: containerReq,
-		Started:          true,
-	})
-	if err != nil {
-		t.Fatalf("Failed to restart container: %v", err)
+		err = ctr.Start(ctx)
+		require.NoError(t, err)
+
+		// Wait for service to be ready again
+		err = stack.WaitForService("vaultic",
+			wait.ForAll(
+				wait.ForExposedPort(),
+				wait.ForLog("Starting Vaultic server"),
+				wait.ForLog("Building index"),
+				wait.ForLog("Finished building index"),
+			)).Up(ctx, compose.Wait(true))
+		require.NoError(t, err)
 	}
 
-	t.Run("After restart, keys and exists", func(t *testing.T) {
-		if got := run("get", "b"); got != "(nil)" {
-			t.Errorf("expected (nil), got %q", got)
-		}
-		if got := run("keys"); got != "a" {
-			t.Errorf("expected a, got %q", got)
-		}
-		if got := run("exists", "a"); got != "true" {
-			t.Errorf("expected true, got %q", got)
-		}
-		if got := run("exists", "b"); got != "false" {
-			t.Errorf("expected false, got %q", got)
-		}
-	})
+	t.Log("=== Phase 1: Initial state without vaultic file ===")
+
+	// Get value of variable a => should return (nil)
+	response := execCommand(`echo "GET a" | nc -w 1 localhost 5381`)
+	require.Contains(t, response, "(nil)", "Expected GET a to return (nil)")
+
+	// Set value of variable a as b => should return OK
+	response = execCommand(`echo "SET a b" | nc -w 1 localhost 5381`)
+	require.Contains(t, response, "OK", "Expected SET a b to return OK")
+
+	// Get value of variable a => should return b
+	response = execCommand(`echo "GET a" | nc -w 1 localhost 5381`)
+	require.Contains(t, response, "b", "Expected GET a to return b")
+
+	t.Log("=== Phase 2: First restart - vaultic file should be present ===")
+	restartContainer()
+
+	// Verify vaultic file is present
+	response = execCommand(`ls -la | grep vaultic`)
+	require.NotEmpty(t, response, "Expected vaultic file to be present after restart")
+
+	// Get value of variable a => should return b
+	response = execCommand(`echo "GET a" | nc -w 1 localhost 5381`)
+	require.Contains(t, response, "b", "Expected GET a to return b after restart")
+
+	// Set value of variable a as x => should return OK
+	response = execCommand(`echo "SET a x" | nc -w 1 localhost 5381`)
+	require.Contains(t, response, "OK", "Expected SET a x to return OK")
+
+	// Set value of variable b as e => should return OK
+	response = execCommand(`echo "SET b e" | nc -w 1 localhost 5381`)
+	require.Contains(t, response, "OK", "Expected SET b e to return OK")
+
+	// Get value of variable a => should return x
+	response = execCommand(`echo "GET a" | nc -w 1 localhost 5381`)
+	require.Contains(t, response, "x", "Expected GET a to return x")
+
+	// Get value of variable b => should return e
+	response = execCommand(`echo "GET b" | nc -w 1 localhost 5381`)
+	require.Contains(t, response, "e", "Expected GET b to return e")
+
+	t.Log("=== Phase 3: Second restart - verify persistence ===")
+	restartContainer()
+
+	// Get value of variable a => should return x
+	response = execCommand(`echo "GET a" | nc -w 1 localhost 5381`)
+	require.Contains(t, response, "x", "Expected GET a to return x after second restart")
+
+	// Get value of variable b => should return e
+	response = execCommand(`echo "GET b" | nc -w 1 localhost 5381`)
+	require.Contains(t, response, "e", "Expected GET b to return e after second restart")
+
+	// Delete b => should return OK
+	response = execCommand(`echo "DEL b" | nc -w 1 localhost 5381`)
+	require.Contains(t, response, "OK", "Expected DEL b to return OK")
+
+	// Get value of variable b => should return (nil)
+	response = execCommand(`echo "GET b" | nc -w 1 localhost 5381`)
+	require.Contains(t, response, "(nil)", "Expected GET b to return (nil) after deletion")
+
+	t.Log("=== Phase 4: Final restart - verify deletion persistence ===")
+	restartContainer()
+
+	// Get value of variable b => should return (nil)
+	response = execCommand(`echo "GET b" | nc -w 1 localhost 5381`)
+	require.Contains(t, response, "(nil)", "Expected GET b to return (nil) after final restart")
+
+	// KEYS should return a
+	response = execCommand(`echo "KEYS" | nc -w 1 localhost 5381`)
+	require.Contains(t, response, "a", "Expected KEYS to return a")
+	require.NotContains(t, response, "b", "Expected KEYS to not contain b")
+
+	// EXISTS a should return true
+	response = execCommand(`echo "EXISTS a" | nc -w 1 localhost 5381`)
+	require.Contains(t, response, "true", "Expected EXISTS a to return true")
+
+	// EXISTS b should return false
+	response = execCommand(`echo "EXISTS b" | nc -w 1 localhost 5381`)
+	require.Contains(t, response, "false", "Expected EXISTS b to return false")
+
+	t.Log("=== All tests completed successfully ===")
 }
