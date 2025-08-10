@@ -1,6 +1,6 @@
 FROM golang:1.23
 
-RUN apt-get update && apt-get install -y netcat-openbsd && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y netcat-openbsd socat && rm -rf /var/lib/apt/lists/*
 
 RUN curl -sSL https://taskfile.dev/install.sh | sh -s -- -d && \
     mv ./bin/task /usr/local/bin/task && \
