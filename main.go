@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -35,11 +36,15 @@ func main() {
 	log.Info().Msg(config.InfoStartingServer)
 	log.Info().Msg(config.InfoBuildingIndex)
 	b := server.NewIndexBuilder(utils.FILENAME)
+	// get time it takes to build index
+	start := time.Now()
 	err = b.BuildIndexes()
 	if err != nil {
 		log.Error().Err(err).Msg(config.ErrorBuildIndex)
 		return
 	}
+	duration := time.Since(start)
+	log.Info().Msgf(config.InfoIndexBuiltTime, duration)
 	log.Info().Msg(config.InfoFinishedIndex)
 	server.Start(fmt.Sprintf(":%d", config.Global.Port))
 }
