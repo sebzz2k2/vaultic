@@ -4,6 +4,8 @@ import (
 	"sync"
 
 	"math/rand"
+
+	"github.com/sebzz2k2/vaultic/pkg/config"
 )
 
 // SkipListNode represents a node in the skip list. Each node contains a key,
@@ -137,13 +139,13 @@ func (s *SkipList) Insert(ts uint64, deleted bool, key, value string) {
 	s.Length++
 }
 
-// Search retrieves the value associated with a given key in the skip list.
+// Get retrieves the value associated with a given key in the skip list.
 // The function first acquires a lock to ensure thread safety. It then
 // traverses the skip list, moving through the levels and nodes until
 // it finds the desired key. If the key is found, the associated value
 // is returned. If the key is not found, an empty string and a boolean
 // indicating the absence of the key are returned.
-func (s *SkipList) Search(key string) (string, bool) {
+func (s *SkipList) Get(key string) (string, bool) {
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
@@ -236,4 +238,39 @@ func (s *SkipList) Print() {
 		}
 		print("nil\n")
 	}
+}
+
+// Delete removes a key-value pair from the skip list.
+func (s *SkipList) Delete(key string, ts uint64) {
+	s.Insert(ts, false, key, config.NilMessage)
+}
+
+// fun that returns a iterator for the skip list
+// This function is useful for iterating over the elements in the skip list
+// and can be used for various operations, such as searching or processing
+// the elements in a specific order.
+func (s *SkipList) Iterator() <-chan *SkipListNode {
+	ch := make(chan *SkipListNode)
+	go func() {
+		s.Mutex.Lock()
+		defer s.Mutex.Unlock()
+
+		current := s.Head.Next[0]
+		for current != nil {
+			ch <- current
+			current = current.Next[0]
+		}
+		close(ch)
+	}()
+	return ch
+}
+
+// take a lock on the skip list
+func (s *SkipList) Lock() {
+	s.Mutex.Lock()
+}
+
+// release the lock on the skip list
+func (s *SkipList) Unlock() {
+	s.Mutex.Unlock()
 }
