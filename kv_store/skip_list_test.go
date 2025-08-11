@@ -94,7 +94,7 @@ func TestSkipListBasic(t *testing.T) {
 
 	for node := range sl.Iterator() {
 		if node != nil {
-			t.Logf("Key: %s, Value: %s\n", node.Key, node.Value)
+			// t.Logf("Key: %s, Value: %s\n", node.Key, node.Value)
 		}
 	}
 }
