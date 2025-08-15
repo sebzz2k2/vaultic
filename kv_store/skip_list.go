@@ -274,3 +274,14 @@ func (s *SkipList) Lock() {
 func (s *SkipList) Unlock() {
 	s.Mutex.Unlock()
 }
+
+// size in bytes of the skip list
+func (s *SkipList) Size() int {
+	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
+	size := 40 // Size of head node
+	for current := s.Head.Next[0]; current != nil; current = current.Next[0] {
+		size += len(current.Key) + len(current.Value) + 8 + 1 + 8*(len(current.Next))
+	}
+	return size
+}

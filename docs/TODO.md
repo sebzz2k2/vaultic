@@ -1,14 +1,14 @@
 # Memtable + SSTable (LSM Base) TODO
 
 ## 1️⃣ Memtable
-- [ ] Choose data structure:
+- [x] Choose data structure:
   - Skiplist (better incremental inserts)
   - Map + sort on flush (simpler start)
-- [ ] Implement CRUD:
-  - [ ] `GET` → search memtable
-  - [ ] `SET` → insert/update key
-  - [ ] `DEL` → insert tombstone marker
-- [ ] Track memory usage in bytes
+- [x] Implement CRUD:
+  - [x] `GET` → search memtable
+  - [x] `SET` → insert/update key
+  - [x] `DEL` → insert tombstone marker
+- [x] Track memory usage in bytes
 - [ ] Trigger flush when size limit reached
 
 ---

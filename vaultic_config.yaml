@@ -1,3 +1,5 @@
 # Vaultic configuration file
 logpath: ./logs/root.log
 port: 5381
+
+write_buffer_size_bytes : 1024
