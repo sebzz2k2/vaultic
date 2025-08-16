@@ -276,7 +276,7 @@ func (s *SkipList) Unlock() {
 }
 
 // size in bytes of the skip list
-func (s *SkipList) Size() int {
+func (s *SkipList) SizeInBytes() int {
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 	size := 40 // Size of head node
