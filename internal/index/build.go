@@ -1,4 +1,4 @@
-package server
+package index
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"github.com/rs/zerolog/log"
 	storage "github.com/sebzz2k2/vaultic/internal/storage"
 	"github.com/sebzz2k2/vaultic/pkg/config"
-	"github.com/sebzz2k2/vaultic/pkg/utils"
 )
 
 type IndexBuilder struct {
@@ -68,13 +67,13 @@ func (ib *IndexBuilder) BuildIndexes() error {
 
 		flags := entry["flags"].(map[string]interface{})
 		if flags["deleted"].(bool) {
-			if utils.IsPresent(key) {
-				utils.DeleteIndexKey(key)
+			if IsPresent(key) {
+				DeleteIndexKey(key)
 			}
 			continue
 		}
 
-		utils.SetIndexKey(key, start, offset)
+		SetIndexKey(key, start, offset)
 	}
 
 	return nil

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sebzz2k2/vaultic/internal/index"
 	"github.com/sebzz2k2/vaultic/internal/protocol/lexer"
 	storage "github.com/sebzz2k2/vaultic/internal/storage"
 	"github.com/sebzz2k2/vaultic/pkg/config"
@@ -96,7 +97,7 @@ func get(key string) (string, error) {
 		return "", fmt.Errorf(config.ErrorFileOpen)
 	}
 	defer file.Close()
-	start, end, found := utils.GetIndexVal(key)
+	start, end, found := index.GetIndexVal(key)
 	if found {
 		_, err := file.Seek(int64(start), io.SeekStart)
 		if err != nil {
@@ -128,7 +129,7 @@ func set(key, val string) (string, error) {
 	}
 	offset := uint32(size) + uint32(totalLen)
 	start := offset - uint32(len(val))
-	utils.SetIndexKey(key, start, offset)
+	index.SetIndexKey(key, start, offset)
 	defer file.Close()
 	_, err = file.Write(setVal)
 	if err != nil {
@@ -138,7 +139,7 @@ func set(key, val string) (string, error) {
 }
 
 func del(key string) (string, error) {
-	_, _, found := utils.GetIndexVal(key)
+	_, _, found := index.GetIndexVal(key)
 	if !found {
 		return config.NilMessage, nil
 	}
@@ -160,12 +161,12 @@ func del(key string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf(config.ErrorFileWrite)
 	}
-	utils.DeleteIndexKey(key)
+	index.DeleteIndexKey(key)
 	return config.OKMessage, nil
 }
 
 func exists(key string) (string, error) {
-	_, _, found := utils.GetIndexVal(key)
+	_, _, found := index.GetIndexVal(key)
 	if found {
 		return config.TrueMessage, nil
 	}
@@ -173,7 +174,7 @@ func exists(key string) (string, error) {
 }
 
 func keys() (string, error) {
-	keys := utils.GetAllKeys()
+	keys := index.GetAllKeys()
 	if len(keys) == 0 {
 		return config.NilMessage, nil
 	}

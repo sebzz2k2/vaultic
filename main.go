@@ -8,10 +8,11 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
+	"github.com/sebzz2k2/vaultic/internal/index"
+	"github.com/sebzz2k2/vaultic/internal/server"
 	"github.com/sebzz2k2/vaultic/pkg/config"
 	"github.com/sebzz2k2/vaultic/pkg/logger"
 	"github.com/sebzz2k2/vaultic/pkg/utils"
-	"github.com/sebzz2k2/vaultic/server"
 )
 
 func main() {
@@ -35,7 +36,7 @@ func main() {
 
 	log.Info().Msg(config.InfoStartingServer)
 	log.Info().Msg(config.InfoBuildingIndex)
-	b := server.NewIndexBuilder(utils.FILENAME)
+	b := index.NewIndexBuilder(utils.FILENAME)
 	// get time it takes to build index
 	start := time.Now()
 	err = b.BuildIndexes()
