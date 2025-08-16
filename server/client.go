@@ -4,10 +4,13 @@ import (
 	"io"
 	"net"
 
-	"github.com/sebzz2k2/vaultic/cmd"
-	"github.com/sebzz2k2/vaultic/lexer"
+	// "github.com/sebzz2k2/vaultic/cmd"
+	"github.com/sebzz2k2/vaultic/internal/protocol"
+	"github.com/sebzz2k2/vaultic/internal/protocol/lexer"
+
+	// "github.com/sebzz2k2/vaultic/internal/protocol"
 	"github.com/sebzz2k2/vaultic/pkg/config"
-	"github.com/sebzz2k2/vaultic/utils"
+	"github.com/sebzz2k2/vaultic/pkg/utils"
 )
 
 func readBuffer(reader io.Reader) ([]byte, bool) {
@@ -29,7 +32,7 @@ func handleClient(client net.Conn) {
 			break
 		}
 		tkns := lexer.Tokenize(string(buff))
-		val, err := cmd.ProcessCommand(tkns)
+		val, err := protocol.ProcessCommand(tkns)
 		if err != nil {
 			utils.WriteToClient(client, err.Error()+config.NL)
 		} else {

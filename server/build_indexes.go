@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/rs/zerolog/log"
-	storage "github.com/sebzz2k2/vaultic/kv_store"
+	storage "github.com/sebzz2k2/vaultic/internal/storage"
 	"github.com/sebzz2k2/vaultic/pkg/config"
-	"github.com/sebzz2k2/vaultic/utils"
+	"github.com/sebzz2k2/vaultic/pkg/utils"
 )
 
 type IndexBuilder struct {

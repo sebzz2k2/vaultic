@@ -1,4 +1,4 @@
-package cmd
+package protocol
 
 import (
 	"fmt"
@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	storage "github.com/sebzz2k2/vaultic/kv_store"
-	"github.com/sebzz2k2/vaultic/lexer"
+	"github.com/sebzz2k2/vaultic/internal/protocol/lexer"
+	storage "github.com/sebzz2k2/vaultic/internal/storage"
 	"github.com/sebzz2k2/vaultic/pkg/config"
-	"github.com/sebzz2k2/vaultic/utils"
+	"github.com/sebzz2k2/vaultic/pkg/utils"
 )
 
 var processors = map[lexer.TokenKind]any{

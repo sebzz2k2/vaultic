@@ -24,7 +24,7 @@ type TestStack struct {
 // SetupTestContainer creates and starts a test container stack
 func SetupTestContainer(t *testing.T) (*TestStack, func()) {
 	ctx, cancel := context.WithCancel(context.Background())
-	composeFile := "../../test-container.compose.yml"
+	composeFile := "../../deployments/docker/test-container.compose.yml"
 	stack, err := compose.NewDockerComposeWith(
 		compose.StackIdentifier("test-vaultic"),
 		compose.WithStackFiles(composeFile),

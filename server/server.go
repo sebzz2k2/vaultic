@@ -4,7 +4,7 @@ import (
 	"net"
 
 	"github.com/sebzz2k2/vaultic/pkg/config"
-	"github.com/sebzz2k2/vaultic/utils"
+	"github.com/sebzz2k2/vaultic/pkg/utils"
 )
 
 func Start(address string) {

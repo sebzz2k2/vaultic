@@ -3,7 +3,7 @@ package lexer
 import (
 	"fmt"
 
-	"github.com/sebzz2k2/vaultic/utils"
+	"github.com/sebzz2k2/vaultic/pkg/utils"
 )
 
 type TokenKind int

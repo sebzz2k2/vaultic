@@ -10,8 +10,8 @@ import (
 
 	"github.com/sebzz2k2/vaultic/pkg/config"
 	"github.com/sebzz2k2/vaultic/pkg/logger"
+	"github.com/sebzz2k2/vaultic/pkg/utils"
 	"github.com/sebzz2k2/vaultic/server"
-	"github.com/sebzz2k2/vaultic/utils"
 )
 
 func main() {
@@ -46,5 +46,8 @@ func main() {
 	duration := time.Since(start)
 	log.Info().Msgf(config.InfoIndexBuiltTime, duration)
 	log.Info().Msg(config.InfoFinishedIndex)
+	// creates a task to monitor memtable in the background
+	// go b.monitorMemtable(size in bytes)
+
 	server.Start(fmt.Sprintf(":%d", config.Global.Port))
 }
