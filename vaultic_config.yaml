@@ -8,4 +8,11 @@ logging:
   toFile: false
   toConsole: true
 
+server:
+  address: localhost
+  port: 5381
+  maxConnections: 100
+  maxMessageSizeBytes: 1048576 # 1 MB
+
+
 write_buffer_size_bytes : 1024

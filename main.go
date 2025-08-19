@@ -1,12 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
+	"github.com/sebzz2k2/vaultic/internal/server"
 	"github.com/sebzz2k2/vaultic/pkg/config"
 	"github.com/sebzz2k2/vaultic/pkg/logger"
 )
@@ -28,7 +33,7 @@ func main() {
 
 type Application struct {
 	config *config.Config
-	// server *server.Server
+	server *server.Server
 	// engine storage.StorageEngine
 }
 
@@ -40,13 +45,27 @@ func (app *Application) Run() error {
 	if err := app.initLogger(); err != nil {
 		return fmt.Errorf("failed to initialize logger: %w", err)
 	}
-	fmt.Println(app.config.Logging.ToConsole, app.config.Logging.ToFile, "49")
 
 	log.Info().
 		Str("app", AppName).
 		Str("version", Version).
 		Msg("Starting Vaultic Key-Value Store")
-	return nil
+
+	if err := app.initServer(); err != nil {
+		return fmt.Errorf("failed to initialize server: %w", err)
+	}
+
+	svrErrCh := make(chan error, 1)
+	go func() {
+		log.Info().
+			Str("address", app.config.Server.Address).
+			Int("port", app.config.Server.Port).
+			Msg("Server initialized")
+		if err := app.server.Start(); err != nil {
+			svrErrCh <- fmt.Errorf("server error: %w", err)
+		}
+	}()
+	return app.waitForShutdown(svrErrCh)
 }
 
 func (app *Application) initConfig() error {
@@ -74,41 +93,58 @@ func (app *Application) initLogger() error {
 	}
 	return nil
 }
+func (app *Application) initServer() error {
+	log.Info().Msg("Initializing server")
+	cfg := &server.Config{
+		Address:        app.config.Server.Address,
+		Port:           app.config.Server.Port,
+		MaxConnections: app.config.Server.MaxConnections,
+		MaxMessageSize: app.config.Server.MaxMessageSize,
+	}
 
-// func maintemp() {
-// 	err := config.InitConfig()
-// 	if err != nil {
-// 		panic(fmt.Errorf(config.ErrorFailedToLoadConfig, err))
-// 	}
+	svr, err := server.New(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to create server: %w", err)
+	}
+	app.server = svr
 
-// 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
-// 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	return nil
+}
 
-// 	err = logger.Setup(logger.Config{
-// 		Level:     zerolog.DebugLevel,
-// 		Console:   true,
-// 		LogToFile: true,
-// 		FilePath:  config.Global.Logging.Path,
-// 	})
-// 	if err != nil {
-// 		log.Fatal().Err(err).Msg(config.ErrorFailedToSetUpLogger)
-// 	}
+func (app *Application) waitForShutdown(serverErrCh <-chan error) error {
+	shutdownCh := make(chan os.Signal, 1)
+	signal.Notify(shutdownCh, os.Interrupt, syscall.SIGTERM)
 
-// 	log.Info().Msg(config.InfoStartingServer)
-// 	log.Info().Msg(config.InfoBuildingIndex)
-// 	b := index.NewIndexBuilder(utils.FILENAME)
-// 	// get time it takes to build index
-// 	start := time.Now()
-// 	err = b.BuildIndexes()
-// 	if err != nil {
-// 		log.Error().Err(err).Msg(config.ErrorBuildIndex)
-// 		return
-// 	}
-// 	duration := time.Since(start)
-// 	log.Info().Msgf(config.InfoIndexBuiltTime, duration)
-// 	log.Info().Msg(config.InfoFinishedIndex)
-// 	// creates a task to monitor memtable in the background
-// 	// go b.monitorMemtable(size in bytes)
+	select {
+	case err := <-serverErrCh:
+		log.Error().Err(err).Msg("Server error occurred")
+		return app.shutdown()
+	case sig := <-shutdownCh:
+		log.Info().
+			Str("signal", sig.String()).
+			Msg("Shutdown signal received")
+		return app.shutdown()
+	}
+}
+func (app *Application) shutdown() error {
+	log.Info().Msg("Initiating graceful shutdown")
 
-// 	server.Start(fmt.Sprintf(":%d", config.Global.Port))
-// }
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+
+	if app.server != nil {
+		if err := app.server.Shutdown(ctx); err != nil {
+			log.Error().Err(err).Msg("Error shutting down server")
+		}
+	}
+	// if app.engine != nil {
+	// 	log.Info().Msg("Closing storage engine")
+	// 	if err := app.engine.Close(); err != nil {
+	// 		log.Error().Err(err).Msg("Error closing storage engine")
+	// 		return err
+	// 	}
+	// }
+
+	log.Info().Msg("Graceful shutdown completed")
+	return nil
+}

@@ -12,9 +12,17 @@ type loggingConfig struct {
 	Level     string `yaml:"level"`
 	ToConsole bool   `yaml:"toConsole"`
 }
+
+type serverConfig struct {
+	Address        string `yaml:"address"`
+	Port           int    `yaml:"port"`
+	MaxConnections int    `yaml:"maxConnections"`
+	MaxMessageSize int    `yaml:"maxMessageSizeBytes"` // in bytes
+}
 type Config struct {
 	Port    int           `yaml:"port"`
 	Logging loggingConfig `yaml:"logging"`
+	Server  serverConfig  `yaml:"server"`
 }
 
 func DefaultConfig() Config {
@@ -24,6 +32,12 @@ func DefaultConfig() Config {
 			ToFile:    true,
 			Level:     "trace",
 			ToConsole: true,
+		},
+		Server: serverConfig{
+			Address:        "localhost",
+			Port:           5381,
+			MaxConnections: 100,
+			MaxMessageSize: 1024 * 1024, // 1 MB
 		},
 		Port: 5381,
 	}
