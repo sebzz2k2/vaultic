@@ -6,23 +6,22 @@ import (
 	"net"
 	"time"
 
-	"github.com/sebzz2k2/vaultic/internal/protocol"
 	"github.com/sebzz2k2/vaultic/internal/protocol/lexer"
+	"github.com/sebzz2k2/vaultic/internal/storage"
 )
 
 type Client struct {
-	conn net.Conn
-	// engine   storage.StorageEngine
+	conn   net.Conn
+	engine storage.StorageEngine
 	config *Config
 	reader *bufio.Reader
 	writer *bufio.Writer
-	// protocol *protocol.Protocol // -- TODO
 }
 
-func NewClient(conn net.Conn, config *Config) *Client {
+func NewClient(conn net.Conn, config *Config, engine storage.StorageEngine) *Client {
 	return &Client{
-		conn: conn,
-		// engine: engine,
+		conn:   conn,
+		engine: engine,
 		config: config,
 		reader: bufio.NewReader(conn),
 		writer: bufio.NewWriter(conn),
@@ -50,7 +49,7 @@ func (c *Client) Handle() error {
 			return err
 		}
 		tkns := lexer.Tokenize(string(buff))
-		val, err := protocol.ProcessCommand(tkns)
+		val, err := c.engine.Protocol.ProcessCommand(tkns)
 		if err != nil {
 			if err := c.writeMessage(err.Error() + "\n"); err != nil {
 				return err

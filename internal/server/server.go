@@ -9,12 +9,13 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/sebzz2k2/vaultic/internal/storage"
 	"github.com/sebzz2k2/vaultic/pkg/utils"
 )
 
 type Server struct {
-	config *Config
-	// engine   storage.StorageEngine
+	config   *Config
+	engine   storage.StorageEngine
 	listener net.Listener
 
 	connections sync.Map
@@ -44,9 +45,10 @@ func defaultConfig() *Config {
 	}
 }
 
-func New(cfg *Config) (*Server, error) {
+func New(cfg *Config, engine storage.StorageEngine) (*Server, error) {
 	return &Server{
 		config: cfg,
+		engine: engine,
 	}, nil
 }
 
@@ -101,7 +103,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 		conn.SetWriteDeadline(time.Now().Add(s.config.WriteTimeout))
 	}
 
-	client := NewClient(conn, s.config)
+	client := NewClient(conn, s.config, s.engine)
 
 	log.Info().
 		Str("remote_addr", conn.RemoteAddr().String()).

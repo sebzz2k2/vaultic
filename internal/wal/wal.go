@@ -1,4 +1,4 @@
-package storage
+package wal
 
 import (
 	"encoding/binary"
@@ -7,6 +7,13 @@ import (
 	"github.com/sebzz2k2/vaultic/pkg/config"
 	"github.com/sebzz2k2/vaultic/pkg/utils"
 )
+
+type WAL struct {
+}
+
+func NewWAL() *WAL {
+	return &WAL{}
+}
 
 /*
 0th bit deleted 0 or 1
@@ -34,7 +41,7 @@ func encodeFlags(flags ...bool) byte {
 <key length> bytes key
 <value length> bytes value
 */
-func EncodeWAL(version int, deleted bool, ts uint64, checkpoint bool, key, value string) ([]byte, int) {
+func (w *WAL) EncodeWAL(version int, deleted bool, ts uint64, checkpoint bool, key, value string) ([]byte, int) {
 	keyLen := uint16(len(key))     // 2 bytes for key length
 	valueLen := uint32(len(value)) // 4 bytes for value length
 
@@ -86,7 +93,7 @@ func decodeFlags(encoded byte) map[string]interface{} {
 		"reserved":   flags[3:],
 	}
 }
-func DecodeWAL(encoded []byte) (map[string]interface{}, error) {
+func (w *WAL) DecodeWAL(encoded []byte) (map[string]interface{}, error) {
 	if len(encoded) < 4 {
 		return nil, errors.New(config.ErrorInsufficientData)
 	}

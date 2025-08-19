@@ -3,21 +3,25 @@ package index
 import (
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/rs/zerolog/log"
-	storage "github.com/sebzz2k2/vaultic/internal/storage"
+	// storage "github.com/sebzz2k2/vaultic/internal/storage"
+	"github.com/sebzz2k2/vaultic/internal/wal"
 	"github.com/sebzz2k2/vaultic/pkg/config"
 )
 
-type IndexBuilder struct {
+type Index struct {
 	filename string
+	index    *sync.Map
+	wal      *wal.WAL
 }
 
-func NewIndexBuilder(filename string) *IndexBuilder {
-	return &IndexBuilder{filename: filename}
+func NewIndex(filename string, wal *wal.WAL) *Index {
+	return &Index{filename: filename, wal: wal, index: &sync.Map{}}
 }
 
-func bytesDecode(val []byte, decodedData *[]interface{}) {
+func (idx *Index) bytesDecode(val []byte, decodedData *[]interface{}) {
 	if len(val) < 4 {
 		return
 	}
@@ -30,20 +34,20 @@ func bytesDecode(val []byte, decodedData *[]interface{}) {
 	entry := make([]byte, length)
 	copy(entry, val[:length])
 
-	decode, err := storage.DecodeWAL(entry)
+	decode, err := idx.wal.DecodeWAL(entry)
 	if err != nil {
 		log.Error().Err(err).Msg(config.ErrorDecodeData)
 		return
 	}
 	*decodedData = append(*decodedData, decode)
-	bytesDecode(val[length:], decodedData)
+	idx.bytesDecode(val[length:], decodedData)
 }
 
-func (ib *IndexBuilder) BuildIndexes() error {
-	fileBytes, err := os.ReadFile(ib.filename)
+func (idx *Index) BuildIndexes() error {
+	fileBytes, err := os.ReadFile(idx.filename)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Warn().Msgf(config.ErrorNoFileFound, ib.filename)
+			log.Warn().Msgf(config.ErrorNoFileFound, idx.filename)
 			return nil
 		}
 		fmt.Println(err)
@@ -51,7 +55,7 @@ func (ib *IndexBuilder) BuildIndexes() error {
 	}
 
 	var decodedData []interface{}
-	bytesDecode(fileBytes, &decodedData)
+	idx.bytesDecode(fileBytes, &decodedData)
 
 	offset := uint32(0)
 	for _, v := range decodedData {
@@ -67,13 +71,12 @@ func (ib *IndexBuilder) BuildIndexes() error {
 
 		flags := entry["flags"].(map[string]interface{})
 		if flags["deleted"].(bool) {
-			if IsPresent(key) {
-				DeleteIndexKey(key)
+			if idx.Exists(key) {
+				idx.Del(key)
 			}
 			continue
 		}
-
-		SetIndexKey(key, start, offset)
+		idx.Set(key, start, offset)
 	}
 
 	return nil
