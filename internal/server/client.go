@@ -1,43 +1,78 @@
 package server
 
 import (
-	"io"
+	"bufio"
+	"errors"
 	"net"
+	"time"
 
-	// "github.com/sebzz2k2/vaultic/cmd"
 	"github.com/sebzz2k2/vaultic/internal/protocol"
 	"github.com/sebzz2k2/vaultic/internal/protocol/lexer"
-
-	// "github.com/sebzz2k2/vaultic/internal/protocol"
-	"github.com/sebzz2k2/vaultic/pkg/config"
-	"github.com/sebzz2k2/vaultic/pkg/utils"
 )
 
-func readBuffer(reader io.Reader) ([]byte, bool) {
-	b := make([]byte, 1024)
-	bn, err := reader.Read(b)
-	if err != nil {
-		if err == io.EOF {
-			return nil, true
-		}
-		panic(err)
-	}
-	return b[:bn], false
+type Client struct {
+	conn net.Conn
+	// engine   storage.StorageEngine
+	config *Config
+	reader *bufio.Reader
+	writer *bufio.Writer
+	// protocol *protocol.Protocol // -- TODO
 }
 
-func handleClient(client net.Conn) {
+func NewClient(conn net.Conn, config *Config) *Client {
+	return &Client{
+		conn: conn,
+		// engine: engine,
+		config: config,
+		reader: bufio.NewReader(conn),
+		writer: bufio.NewWriter(conn),
+	}
+}
+
+func (c *Client) read() ([]byte, error) {
+	b := make([]byte, 1024)
+	bn, err := c.reader.Read(b)
+	if err != nil {
+		return nil, errors.New("failed to read from client: " + err.Error())
+	}
+	return b[:bn], nil
+}
+
+func (c *Client) Handle() error {
+	defer c.writer.Flush()
+
 	for {
-		buff, beof := readBuffer(client)
-		if beof {
-			break
+		if err := c.writeMessage("> "); err != nil {
+			return err
+		}
+		buff, err := c.read()
+		if err != nil {
+			return err
 		}
 		tkns := lexer.Tokenize(string(buff))
 		val, err := protocol.ProcessCommand(tkns)
 		if err != nil {
-			utils.WriteToClient(client, err.Error()+config.NL)
+			if err := c.writeMessage(err.Error() + "\n"); err != nil {
+				return err
+			}
 		} else {
-			utils.WriteToClient(client, val+config.NL)
+			if err := c.writeMessage(val + "\n"); err != nil {
+				return err
+			}
 		}
-		utils.WriteToClient(client, config.PromptMessage)
+		if c.config.ReadTimeout > 0 {
+			c.conn.SetReadDeadline(time.Now().Add(c.config.ReadTimeout))
+		}
+		if c.config.WriteTimeout > 0 {
+			c.conn.SetWriteDeadline(time.Now().Add(c.config.WriteTimeout))
+		}
 	}
+}
+
+func (c *Client) writeMessage(message string) error {
+	_, err := c.writer.WriteString(message)
+	if err != nil {
+		return err
+	}
+	return c.writer.Flush()
 }
