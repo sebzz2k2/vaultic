@@ -101,19 +101,19 @@ func (s *Server) handleConnection(conn net.Conn) {
 		conn.SetWriteDeadline(time.Now().Add(s.config.WriteTimeout))
 	}
 
-	// client := NewClient(conn, s.config)
+	client := NewClient(conn, s.config)
 
 	log.Info().
 		Str("remote_addr", conn.RemoteAddr().String()).
 		Int64("connection_count", s.getConnectionCount()).
 		Msg("New client connected")
 
-	// if err := client.Handle(); err != nil {
-	// 	log.Error().
-	// 		Err(err).
-	// 		Str("remote_addr", conn.RemoteAddr().String()).
-	// 		Msg("Client handling error")
-	// }
+	if err := client.Handle(); err != nil {
+		log.Error().
+			Err(err).
+			Str("remote_addr", conn.RemoteAddr().String()).
+			Msg("Client handling error")
+	}
 
 	log.Info().
 		Str("remote_addr", conn.RemoteAddr().String()).
