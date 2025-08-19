@@ -3,6 +3,7 @@ package server
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"net"
 	"time"
 
@@ -38,7 +39,8 @@ func (c *Client) read() ([]byte, error) {
 }
 
 func (c *Client) Handle() error {
-	defer c.writer.Flush()
+	fmt.Println("Client connected:", c.conn.RemoteAddr().String())
+	// defer c.writer.Flush()
 
 	for {
 		if err := c.writeMessage("> "); err != nil {

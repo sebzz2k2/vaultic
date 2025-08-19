@@ -47,12 +47,13 @@ func validateArgsAndCount(t []lexer.Token) (bool, error) {
 func NewProtocol(wal *wal.WAL) *Protocol {
 	return &Protocol{
 		//TODO remove hardcoded index file name
-		idx: index.NewIndex("index_file", wal),
+		idx: index.NewIndex("vaultic", wal),
 		wal: wal,
 	}
 }
 
 func (p *Protocol) ProcessCommand(tokens []lexer.Token) (string, error) {
+	fmt.Println("Processing command:", tokens)
 	if len(tokens) == 0 {
 		return "", fmt.Errorf(config.ErrorNoTokens)
 	}
@@ -79,9 +80,10 @@ func (p *Protocol) ProcessCommand(tokens []lexer.Token) (string, error) {
 	fnValue := reflect.ValueOf(fn)
 
 	args := tokens[1:]
-	reflectArgs := make([]reflect.Value, len(args))
+	reflectArgs := make([]reflect.Value, len(args)+1)
+	reflectArgs[0] = reflect.ValueOf(p)
 	for i, tok := range args {
-		reflectArgs[i] = reflect.ValueOf(tok.Value)
+		reflectArgs[i+1] = reflect.ValueOf(tok.Value)
 	}
 
 	results := fnValue.Call(reflectArgs)
