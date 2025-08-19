@@ -2,6 +2,7 @@ package logger
 
 import (
 	"os"
+	"strings"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -14,6 +15,10 @@ type Config struct {
 	FilePath  string
 }
 
+func getFileNameFromPath(path2 string) string {
+	parts := strings.Split(path2, "/")
+	return parts[len(parts)-1]
+}
 func Setup(cfg Config) error {
 	var output *os.File
 	var err error
@@ -23,7 +28,7 @@ func Setup(cfg Config) error {
 		if err != nil {
 			if os.IsNotExist(err) {
 				// Create the log directory if it doesn't exist
-				if err := os.MkdirAll(cfg.FilePath[:len(cfg.FilePath)-len("root.log")], 0755); err != nil {
+				if err := os.MkdirAll(cfg.FilePath[:len(cfg.FilePath)-len(getFileNameFromPath(cfg.FilePath))], 0755); err != nil {
 					return err
 				}
 				output, err = os.OpenFile(cfg.FilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
@@ -43,12 +48,4 @@ func Setup(cfg Config) error {
 
 	zerolog.SetGlobalLevel(cfg.Level)
 	return nil
-}
-
-func init() {
-	_ = Setup(Config{
-		Level:     zerolog.InfoLevel,
-		Console:   true,
-		LogToFile: false,
-	})
 }

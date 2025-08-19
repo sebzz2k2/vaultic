@@ -6,21 +6,30 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var Global Config
-
+type loggingConfig struct {
+	Path      string `yaml:"path"`
+	ToFile    bool   `yaml:"toFile"`
+	Level     string `yaml:"level"`
+	ToConsole bool   `yaml:"toConsole"`
+}
 type Config struct {
-	LogPath string `yaml:"logpath"`
-	Port    int    `yaml:"port"`
+	Port    int           `yaml:"port"`
+	Logging loggingConfig `yaml:"logging"`
 }
 
 func DefaultConfig() Config {
 	return Config{
-		LogPath: "./logs/root.log",
-		Port:    5381,
+		Logging: loggingConfig{
+			Path:      "./logs/root.log",
+			ToFile:    true,
+			Level:     "trace",
+			ToConsole: true,
+		},
+		Port: 5381,
 	}
 }
 
-func loadConfig(path string) (Config, error) {
+func LoadConfig(path string) (Config, error) {
 
 	cfg := DefaultConfig()
 	file, err := os.Open(path)
@@ -34,13 +43,4 @@ func loadConfig(path string) (Config, error) {
 	}
 
 	return cfg, nil
-}
-
-func InitConfig() error {
-	cfg, err := loadConfig("vaultic_config.yaml")
-	if err != nil {
-		return err
-	}
-	Global = cfg
-	return nil
 }

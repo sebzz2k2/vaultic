@@ -1,5 +1,11 @@
 # Vaultic configuration file
-logpath: ./logs/root.log
 port: 5381
+
+logging:
+  path: ./logs/root.log
+  # can also be set to trace debug info warn error fatal panic
+  level: debug
+  toFile: false
+  toConsole: true
 
 write_buffer_size_bytes : 1024
