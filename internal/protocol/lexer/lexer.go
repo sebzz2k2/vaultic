@@ -3,6 +3,8 @@ package lexer
 import (
 	"regexp"
 	"strings"
+
+	"github.com/sebzz2k2/vaultic/internal/resp"
 )
 
 type lexer struct {
@@ -74,4 +76,14 @@ func Tokenize(input string) []Token {
 	}
 
 	return l.tokens
+}
+
+func TokenizeCLI(input string) string {
+	builder := resp.NewBuilder(false)
+	var elements []string
+	for _, token := range strings.Fields(input) {
+		elements = append(elements, token)
+	}
+
+	return builder.Array(elements).Build()
 }
