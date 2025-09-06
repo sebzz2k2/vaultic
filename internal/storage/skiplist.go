@@ -4,8 +4,6 @@ import (
 	"sync"
 
 	"math/rand"
-
-	"github.com/sebzz2k2/vaultic/pkg/config"
 )
 
 // SkipListNode represents a node in the skip list. Each node contains a key,
@@ -242,7 +240,7 @@ func (s *SkipList) Print() {
 
 // Delete removes a key-value pair from the skip list.
 func (s *SkipList) Delete(key string, ts uint64) {
-	s.Insert(ts, false, key, config.NilMessage)
+	s.Insert(ts, false, key, "(nil)")
 }
 
 // fun that returns a iterator for the skip list

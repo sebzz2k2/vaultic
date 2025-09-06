@@ -8,7 +8,6 @@ import (
 	"github.com/rs/zerolog/log"
 	// storage "github.com/sebzz2k2/vaultic/internal/storage"
 	"github.com/sebzz2k2/vaultic/internal/wal"
-	"github.com/sebzz2k2/vaultic/pkg/config"
 )
 
 type Index struct {
@@ -36,7 +35,7 @@ func (idx *Index) bytesDecode(val []byte, decodedData *[]interface{}) {
 
 	decode, err := idx.wal.DecodeWAL(entry)
 	if err != nil {
-		log.Error().Err(err).Msg(config.ErrorDecodeData)
+		log.Error().Err(err).Msg("Failed to decode WAL entry")
 		return
 	}
 	*decodedData = append(*decodedData, decode)
@@ -47,7 +46,7 @@ func (idx *Index) BuildIndexes() error {
 	fileBytes, err := os.ReadFile(idx.filename)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Warn().Msgf(config.ErrorNoFileFound, idx.filename)
+			log.Warn().Msgf("WAL file not found: %s", idx.filename)
 			return nil
 		}
 		fmt.Println(err)

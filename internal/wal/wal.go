@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"errors"
 
-	"github.com/sebzz2k2/vaultic/pkg/config"
 	"github.com/sebzz2k2/vaultic/pkg/utils"
 )
 
@@ -95,12 +94,12 @@ func decodeFlags(encoded byte) map[string]interface{} {
 }
 func (w *WAL) DecodeWAL(encoded []byte) (map[string]interface{}, error) {
 	if len(encoded) < 4 {
-		return nil, errors.New(config.ErrorInsufficientData)
+		return nil, errors.New("Insufficient data")
 	}
 
 	totalLength := binary.BigEndian.Uint32(encoded[:4])
 	if len(encoded) != int(totalLength) {
-		return nil, errors.New(config.ErrorDataLengthMismatch)
+		return nil, errors.New("Data length mismatch")
 	}
 
 	version := encoded[4]
@@ -113,7 +112,7 @@ func (w *WAL) DecodeWAL(encoded []byte) (map[string]interface{}, error) {
 	valueLen := binary.BigEndian.Uint32(encoded[20:24])
 
 	if int(24+uint32(keyLen)+valueLen) != len(encoded) {
-		return nil, errors.New(config.ErrorMismatchedKeyValueLengths)
+		return nil, errors.New("Mismatched key/value lengths")
 	}
 
 	key := string(encoded[24 : 24+keyLen])
@@ -122,7 +121,7 @@ func (w *WAL) DecodeWAL(encoded []byte) (map[string]interface{}, error) {
 	// Verify CRC
 	computedCRC := utils.Crc32(key + value)
 	if computedCRC != keyValCRC {
-		return nil, errors.New(config.ErrorCRCCheckFailed)
+		return nil, errors.New("CRC check failed")
 	}
 	return map[string]interface{}{
 		"totalLength": totalLength,
