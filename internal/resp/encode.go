@@ -16,35 +16,36 @@ type Builder struct {
 func NewBuilder(debug bool) *Builder {
 	b := &Builder{debug: debug}
 	if debug {
-		b.crlf = "\\r\\n"
+		b.crlf = ESC_CRLF
 	} else {
-		b.crlf = "\r\n"
+		b.crlf = CRLF
 	}
 	return b
 }
 
 func (b *Builder) SimpleString(s string) *Builder {
-	b.sb.WriteString("+" + s + b.crlf)
+
+	b.sb.WriteString(string(respTypeToChar[SIMPLE_STRING]) + s + b.crlf)
 	return b
 }
 
 func (b *Builder) Error(err string) *Builder {
-	b.sb.WriteString("-" + err + b.crlf)
+	b.sb.WriteString(string(respTypeToChar[ERROR]) + err + b.crlf)
 	return b
 }
 
 func (b *Builder) Integer(i int64) *Builder {
-	b.sb.WriteString(":" + strconv.FormatInt(i, 10) + b.crlf)
+	b.sb.WriteString(string(respTypeToChar[INTEGER]) + strconv.FormatInt(i, 10) + b.crlf)
 	return b
 }
 
 func (b *Builder) Bulk(s string) *Builder {
-	b.sb.WriteString(fmt.Sprintf("$%d%s%s%s", len(s), b.crlf, s, b.crlf))
+	b.sb.WriteString(fmt.Sprintf("%c%d%s%s%s", respTypeToChar[BULK_STRING], len(s), b.crlf, s, b.crlf))
 	return b
 }
 
 func (b *Builder) Array(elements []string) *Builder {
-	b.sb.WriteString(fmt.Sprintf("*%d%s", len(elements), b.crlf))
+	b.sb.WriteString(fmt.Sprintf("%c%d%s", respTypeToChar[ARRAY], len(elements), b.crlf))
 	for _, e := range elements {
 		b.Bulk(e)
 	}
@@ -52,42 +53,42 @@ func (b *Builder) Array(elements []string) *Builder {
 }
 
 func (b *Builder) Null() *Builder {
-	b.sb.WriteString("_" + b.crlf)
+	b.sb.WriteString(string(respTypeToChar[NULL]) + b.crlf)
 	return b
 }
 
 func (b *Builder) Boolean(v bool) *Builder {
 	if v {
-		b.sb.WriteString("#t" + b.crlf)
+		b.sb.WriteString(TRUE + b.crlf)
 	} else {
-		b.sb.WriteString("#f" + b.crlf)
+		b.sb.WriteString(FALSE + b.crlf)
 	}
 	return b
 }
 
 func (b *Builder) Double(f float64) *Builder {
-	b.sb.WriteString("," + strconv.FormatFloat(f, 'f', -1, 64) + b.crlf)
+	b.sb.WriteString(string(respTypeToChar[DOUBLE]) + strconv.FormatFloat(f, 'f', -1, 64) + b.crlf)
 	return b
 }
 
 func (b *Builder) BigNumber(n *big.Int) *Builder {
-	b.sb.WriteString("(" + n.String() + b.crlf)
+	b.sb.WriteString(string(respTypeToChar[BIG_NUMBER]) + n.String() + b.crlf)
 	return b
 }
 
 func (b *Builder) BulkError(err string) *Builder {
-	b.sb.WriteString(fmt.Sprintf("!%d%s%s%s", len(err), b.crlf, err, b.crlf))
+	b.sb.WriteString(fmt.Sprintf("%c%d%s%s%s", respTypeToChar[BULK_ERROR], len(err), b.crlf, err, b.crlf))
 	return b
 }
 
 func (b *Builder) VerbatimString(format, data string) *Builder {
 	content := format + ":" + data
-	b.sb.WriteString(fmt.Sprintf("=%d%s%s%s", len(content), b.crlf, content, b.crlf))
+	b.sb.WriteString(fmt.Sprintf("%c%d%s%s%s", respTypeToChar[VERBATIM], len(content), b.crlf, content, b.crlf))
 	return b
 }
 
 func (b *Builder) Map(m map[string]string) *Builder {
-	b.sb.WriteString(fmt.Sprintf("%%%d%s", len(m), b.crlf))
+	b.sb.WriteString(fmt.Sprintf("%c%d%s", respTypeToChar[MAP], len(m), b.crlf))
 	for k, v := range m {
 		b.Bulk(k)
 		b.Bulk(v)
@@ -96,7 +97,7 @@ func (b *Builder) Map(m map[string]string) *Builder {
 }
 
 func (b *Builder) Attribute(attrs map[string]string) *Builder {
-	b.sb.WriteString(fmt.Sprintf("|%d%s", len(attrs), b.crlf))
+	b.sb.WriteString(fmt.Sprintf("%c%d%s", respTypeToChar[ATTRIBUTES], len(attrs), b.crlf))
 	for k, v := range attrs {
 		b.Bulk(k)
 		b.Bulk(v)
@@ -105,7 +106,7 @@ func (b *Builder) Attribute(attrs map[string]string) *Builder {
 }
 
 func (b *Builder) Set(elements []string) *Builder {
-	b.sb.WriteString(fmt.Sprintf("~%d%s", len(elements), b.crlf))
+	b.sb.WriteString(fmt.Sprintf("%c%d%s", respTypeToChar[SET], len(elements), b.crlf))
 	for _, e := range elements {
 		b.Bulk(e)
 	}
@@ -113,7 +114,7 @@ func (b *Builder) Set(elements []string) *Builder {
 }
 
 func (b *Builder) Push(elements []string) *Builder {
-	b.sb.WriteString(fmt.Sprintf(">%d%s", len(elements), b.crlf))
+	b.sb.WriteString(fmt.Sprintf("%c%d%s", respTypeToChar[PUSH], len(elements), b.crlf))
 	for _, e := range elements {
 		b.Bulk(e)
 	}

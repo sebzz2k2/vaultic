@@ -38,35 +38,35 @@ func (d *Decoder) Decode() (*RESPValue, error) {
 	}
 
 	switch typeByte {
-	case '+':
+	case respTypeToChar[SIMPLE_STRING]:
 		return d.decodeSimpleString()
-	case '-':
+	case respTypeToChar[ERROR]:
 		return d.decodeError()
-	case ':':
+	case respTypeToChar[INTEGER]:
 		return d.decodeInteger()
-	case '$':
+	case respTypeToChar[BULK_STRING]:
 		return d.decodeBulkString()
-	case '*':
+	case respTypeToChar[ARRAY]:
 		return d.decodeArray()
-	case '_':
+	case respTypeToChar[NULL]:
 		return d.decodeNull()
-	case '#':
+	case respTypeToChar[BOOLEAN]:
 		return d.decodeBoolean()
-	case ',':
+	case respTypeToChar[DOUBLE]:
 		return d.decodeDouble()
-	case '(':
+	case respTypeToChar[BIG_NUMBER]:
 		return d.decodeBigNumber()
-	case '!':
+	case respTypeToChar[BULK_ERROR]:
 		return d.decodeBulkError()
-	case '=':
+	case respTypeToChar[VERBATIM]:
 		return d.decodeVerbatimString()
-	case '%':
+	case respTypeToChar[MAP]:
 		return d.decodeMap()
-	case '|':
+	case respTypeToChar[ATTRIBUTES]:
 		return d.decodeAttribute()
-	case '~':
+	case respTypeToChar[SET]:
 		return d.decodeSet()
-	case '>':
+	case respTypeToChar[PUSH]:
 		return d.decodePush()
 	default:
 		return nil, errors.New("unknown RESP type: " + string(typeByte))
@@ -89,7 +89,7 @@ func (d *Decoder) decodeSimpleString() (*RESPValue, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &RESPValue{Type: "simple_string", String: str}, nil
+	return &RESPValue{Type: SIMPLE_STRING, String: str}, nil
 }
 
 func (d *Decoder) decodeError() (*RESPValue, error) {
@@ -97,7 +97,7 @@ func (d *Decoder) decodeError() (*RESPValue, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &RESPValue{Type: "error", Error: str}, nil
+	return &RESPValue{Type: ERROR, Error: str}, nil
 }
 
 func (d *Decoder) decodeInteger() (*RESPValue, error) {
@@ -109,7 +109,7 @@ func (d *Decoder) decodeInteger() (*RESPValue, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &RESPValue{Type: "integer", Int: val}, nil
+	return &RESPValue{Type: INTEGER, Int: val}, nil
 }
 
 func (d *Decoder) decodeBulkString() (*RESPValue, error) {
@@ -124,12 +124,12 @@ func (d *Decoder) decodeBulkString() (*RESPValue, error) {
 	}
 
 	if length == -1 {
-		return &RESPValue{Type: "bulk_string", Null: true}, nil
+		return &RESPValue{Type: BULK_STRING, Null: true}, nil
 	}
 
 	if length == 0 {
 		d.readLine()
-		return &RESPValue{Type: "bulk_string", String: ""}, nil
+		return &RESPValue{Type: BULK_STRING, String: ""}, nil
 	}
 
 	data := make([]byte, length)
@@ -139,7 +139,7 @@ func (d *Decoder) decodeBulkString() (*RESPValue, error) {
 	}
 
 	d.readLine()
-	return &RESPValue{Type: "bulk_string", String: string(data)}, nil
+	return &RESPValue{Type: BULK_STRING, String: string(data)}, nil
 }
 
 func (d *Decoder) decodeArray() (*RESPValue, error) {
@@ -154,7 +154,7 @@ func (d *Decoder) decodeArray() (*RESPValue, error) {
 	}
 
 	if length == -1 {
-		return &RESPValue{Type: "array", Null: true}, nil
+		return &RESPValue{Type: ARRAY, Null: true}, nil
 	}
 
 	array := make([]RESPValue, length)
@@ -166,7 +166,7 @@ func (d *Decoder) decodeArray() (*RESPValue, error) {
 		array[i] = *val
 	}
 
-	return &RESPValue{Type: "array", Array: array}, nil
+	return &RESPValue{Type: ARRAY, Array: array}, nil
 }
 
 func (d *Decoder) decodeNull() (*RESPValue, error) {
@@ -174,7 +174,7 @@ func (d *Decoder) decodeNull() (*RESPValue, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &RESPValue{Type: "null", Null: true}, nil
+	return &RESPValue{Type: NULL, Null: true}, nil
 }
 
 func (d *Decoder) decodeBoolean() (*RESPValue, error) {
@@ -184,9 +184,9 @@ func (d *Decoder) decodeBoolean() (*RESPValue, error) {
 	}
 
 	if str == "t" {
-		return &RESPValue{Type: "boolean", Bool: true}, nil
+		return &RESPValue{Type: BOOLEAN, Bool: true}, nil
 	} else if str == "f" {
-		return &RESPValue{Type: "boolean", Bool: false}, nil
+		return &RESPValue{Type: BOOLEAN, Bool: false}, nil
 	}
 
 	return nil, errors.New("invalid boolean value: " + str)
@@ -200,18 +200,18 @@ func (d *Decoder) decodeDouble() (*RESPValue, error) {
 
 	switch str {
 	case "inf":
-		return &RESPValue{Type: "double", Float: math.Inf(1)}, nil
+		return &RESPValue{Type: DOUBLE, Float: math.Inf(1)}, nil
 	case "-inf":
-		return &RESPValue{Type: "double", Float: math.Inf(-1)}, nil
+		return &RESPValue{Type: DOUBLE, Float: math.Inf(-1)}, nil
 	case "nan":
-		return &RESPValue{Type: "double", Float: math.NaN()}, nil
+		return &RESPValue{Type: DOUBLE, Float: math.NaN()}, nil
 	}
 
 	val, err := strconv.ParseFloat(str, 64)
 	if err != nil {
 		return nil, err
 	}
-	return &RESPValue{Type: "double", Float: val}, nil
+	return &RESPValue{Type: DOUBLE, Float: val}, nil
 }
 
 func (d *Decoder) decodeBigNumber() (*RESPValue, error) {
@@ -226,7 +226,7 @@ func (d *Decoder) decodeBigNumber() (*RESPValue, error) {
 		return nil, errors.New("invalid big number: " + str)
 	}
 
-	return &RESPValue{Type: "big_number", BigInt: bigInt}, nil
+	return &RESPValue{Type: BIG_NUMBER, BigInt: bigInt}, nil
 }
 
 func (d *Decoder) decodeBulkError() (*RESPValue, error) {
@@ -247,7 +247,7 @@ func (d *Decoder) decodeBulkError() (*RESPValue, error) {
 	}
 
 	d.readLine()
-	return &RESPValue{Type: "bulk_error", Error: string(data)}, nil
+	return &RESPValue{Type: BULK_ERROR, Error: string(data)}, nil
 }
 
 func (d *Decoder) decodeVerbatimString() (*RESPValue, error) {
@@ -270,11 +270,11 @@ func (d *Decoder) decodeVerbatimString() (*RESPValue, error) {
 	d.readLine()
 
 	content := string(data)
-	if len(content) >= 4 && content[3] == ':' {
-		return &RESPValue{Type: "verbatim_string", String: content[4:]}, nil
+	if len(content) >= 4 && content[3] == respTypeToChar[INTEGER] {
+		return &RESPValue{Type: VERBATIM, String: content[4:]}, nil
 	}
 
-	return &RESPValue{Type: "verbatim_string", String: content}, nil
+	return &RESPValue{Type: VERBATIM, String: content}, nil
 }
 
 func (d *Decoder) decodeMap() (*RESPValue, error) {
@@ -303,7 +303,7 @@ func (d *Decoder) decodeMap() (*RESPValue, error) {
 		m[key.String] = *value
 	}
 
-	return &RESPValue{Type: "map", Map: m}, nil
+	return &RESPValue{Type: MAP, Map: m}, nil
 }
 
 func (d *Decoder) decodeAttribute() (*RESPValue, error) {
@@ -332,7 +332,7 @@ func (d *Decoder) decodeAttribute() (*RESPValue, error) {
 		m[key.String] = *value
 	}
 
-	return &RESPValue{Type: "attribute", Map: m}, nil
+	return &RESPValue{Type: ATTRIBUTES, Map: m}, nil
 }
 
 func (d *Decoder) decodeSet() (*RESPValue, error) {
@@ -355,7 +355,7 @@ func (d *Decoder) decodeSet() (*RESPValue, error) {
 		array[i] = *val
 	}
 
-	return &RESPValue{Type: "set", Array: array}, nil
+	return &RESPValue{Type: SET, Array: array}, nil
 }
 
 func (d *Decoder) decodePush() (*RESPValue, error) {
@@ -378,7 +378,7 @@ func (d *Decoder) decodePush() (*RESPValue, error) {
 		array[i] = *val
 	}
 
-	return &RESPValue{Type: "push", Array: array}, nil
+	return &RESPValue{Type: PUSH, Array: array}, nil
 }
 
 func DecodeString(input string) (*RESPValue, error) {
