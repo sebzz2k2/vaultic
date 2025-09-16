@@ -1,6 +1,7 @@
 package lexer
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -86,4 +87,28 @@ func TokenizeCLI(input string) string {
 	}
 
 	return builder.Array(elements).Build()
+}
+
+func ConvRESPToTokens(value *resp.RESPValue) []Token {
+	tokens := make([]Token, 0)
+
+	if value.Type != resp.ARRAY {
+		return tokens
+	}
+
+	for _, v := range value.Array {
+		l := newLexer(v.String)
+		for !l.at_end() {
+			for _, p := range l.regex {
+				loc := p.pattern.FindStringIndex(l.input[l.pos:])
+				if loc != nil && loc[0] == 0 {
+					p.handler(l, p.pattern)
+					break
+				}
+			}
+		}
+		tokens = append(tokens, l.tokens...)
+	}
+	fmt.Println("Converted RESP to tokens:", tokens)
+	return tokens
 }

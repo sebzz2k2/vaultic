@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"time"
 
 	"github.com/sebzz2k2/vaultic/internal/protocol/lexer"
+	"github.com/sebzz2k2/vaultic/internal/resp"
 	"github.com/sebzz2k2/vaultic/internal/storage"
 )
 
@@ -43,29 +43,23 @@ func (c *Client) Handle() error {
 	// defer c.writer.Flush()
 
 	for {
-		if err := c.writeMessage("> "); err != nil {
-			return err
-		}
-		buff, err := c.read()
+		tokens := resp.NewDecoder(c.reader)
+		result, err := tokens.Decode()
 		if err != nil {
 			return err
 		}
-		tkns := lexer.Tokenize(string(buff))
-		val, err := c.engine.Protocol.ProcessCommand(tkns)
+
+		tks := lexer.ConvRESPToTokens(result)
+		val, err := c.engine.Protocol.ProcessCommand(tks)
+		tokenizedResponse := lexer.TokenizeCLI(val)
 		if err != nil {
-			if err := c.writeMessage(err.Error() + "\n"); err != nil {
+			if err := c.writeMessage("Error: " + err.Error() + "\n"); err != nil {
 				return err
 			}
 		} else {
-			if err := c.writeMessage(val + "\n"); err != nil {
+			if err := c.writeMessage(tokenizedResponse + "\n"); err != nil {
 				return err
 			}
-		}
-		if c.config.ReadTimeout > 0 {
-			c.conn.SetReadDeadline(time.Now().Add(c.config.ReadTimeout))
-		}
-		if c.config.WriteTimeout > 0 {
-			c.conn.SetWriteDeadline(time.Now().Add(c.config.WriteTimeout))
 		}
 	}
 }
